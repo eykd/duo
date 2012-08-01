@@ -39,9 +39,11 @@ class EnumMeta(type):
 
     def __getitem__(cls, idx):
         try:
-            if isinstance(idx, int):
+            if isinstance(idx, EnumMeta):
+                return cls.members[int(idx)]
+            elif isinstance(idx, int):
                 return cls.members[idx]
-            elif type(idx, basestring):
+            elif isinstance(idx, basestring):
                 try:
                     return getattr(cls, int)
                 except AttributeError:
@@ -97,17 +99,13 @@ class DynamoDB(object):
             del self._connection
         self._tables.clear()
 
-    @property
-    def table(self):
-        if not hasattr(self, '_table'):
-            self._table = self.connection.get_table(self.table_name)
-        return self._table
-
     def __getitem__(self, table_name):
         if table_name not in self._tables:
             self._tables[table_name] = self.connection.get_table(table_name)
         
-        return Table._table_types[self.table_name](self._tables[table_name])
+        table = Table._table_types[table_name](self._tables[table_name])
+        table.table_name = table_name
+        return table
 
 
 class _TableMeta(type):
@@ -241,7 +239,7 @@ class _ChoiceMixin(Field):
     """
     def __init__(self, **kwargs):
         self.enum_type = kwargs.pop('enum_type')
-        super(ChoiceField, self).__init__(**kwargs)
+        super(_ChoiceMixin, self).__init__(**kwargs)
 
     def to_python(self, value):
         return self.enum_type[value]
