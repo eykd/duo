@@ -45,7 +45,7 @@ class EnumMeta(type):
                 return cls.members[idx]
             elif isinstance(idx, basestring):
                 try:
-                    return getattr(cls, int)
+                    return getattr(cls, idx)
                 except AttributeError:
                     pass
         except KeyError:
@@ -228,10 +228,16 @@ class UnicodeField(Field):
     def to_python(self, value):
         return value
 
+    def from_python(self, value):
+        return unicode(value)
+
 
 class IntField(Field):
     def to_python(self, value):
         return value
+
+    def from_python(self, value):
+        return int(value)
 
 
 class _ChoiceMixin(Field):
@@ -248,13 +254,15 @@ class _ChoiceMixin(Field):
 class ChoiceField(_ChoiceMixin, UnicodeField):
     """A unicode field that enforces a set of possible values, using an Enum.
     """
-    pass
+    def from_python(self, value):
+        return unicode(self.enum_type[value])
     
 
 class EnumField(_ChoiceMixin, IntField):
     """An integer field that enforces a set of possible values, using an Enum.
     """
-    pass
+    def from_python(self, value):
+        return int(self.enum_type[value])
 
 
 class DateField(Field):
@@ -263,6 +271,6 @@ class DateField(Field):
 
     def from_python(self, value):
         try:
-            return value.toordinal(value)
+            return value.toordinal()
         except AttributeError:
             raise ValueError('DateField requires a `datetime.date` object.')

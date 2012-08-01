@@ -7,6 +7,8 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
+
+import datetime
     
 import mock
 
@@ -129,3 +131,150 @@ class DynamoDBTests(unittest.TestCase):
 
         self.assertIsInstance(item, TestItemSubclass)
         self.assertEqual(item[self.hash_key_name], self.hash_key_value)
+
+    def test_unicode_fields_should_always_cast_to_unicode(self):
+        class TestItemSubclass(self.duo.Item):
+            table_name = self.table_name
+
+            foo = self.duo.UnicodeField()
+
+        table = self.db[self.table_name]
+        item = table[self.hash_key_value, self.range_key_value]
+
+        self.assertIsInstance(item, TestItemSubclass)
+        self.assertEqual(item[self.hash_key_name], self.hash_key_value)
+
+        item.foo = 'bar'
+        self.assertIsInstance(item['foo'], unicode)
+        self.assertEqual(item['foo'], u'bar')
+        self.assertEqual(item.foo, u'bar')
+
+        item.foo = 9
+        self.assertIsInstance(item['foo'], unicode)
+        self.assertEqual(item['foo'], u'9')
+        self.assertEqual(item.foo, u'9')
+
+    def test_integer_fields_should_always_cast_to_an_integer(self):
+        class TestItemSubclass(self.duo.Item):
+            table_name = self.table_name
+
+            foo = self.duo.IntField()
+
+        table = self.db[self.table_name]
+        item = table[self.hash_key_value, self.range_key_value]
+
+        self.assertIsInstance(item, TestItemSubclass)
+        self.assertEqual(item[self.hash_key_name], self.hash_key_value)
+
+        with self.assertRaises(ValueError):
+            item.foo = 'bar'
+
+        item.foo = 9
+        self.assertIsInstance(item['foo'], int)
+        self.assertEqual(item['foo'], 9)
+        
+    def test_date_fields_should_always_cast_to_an_integer(self):
+        class TestItemSubclass(self.duo.Item):
+            table_name = self.table_name
+
+            foo = self.duo.DateField()
+
+        table = self.db[self.table_name]
+        item = table[self.hash_key_value, self.range_key_value]
+
+        self.assertIsInstance(item, TestItemSubclass)
+        self.assertEqual(item[self.hash_key_name], self.hash_key_value)
+
+        with self.assertRaises(ValueError):
+            item.foo = 'bar'
+
+        item.foo = today = datetime.date.today()
+        self.assertIsInstance(item['foo'], int)
+        self.assertEqual(item['foo'], today.toordinal())
+        self.assertEqual(item.foo, today)
+
+    def test_enum_classes_should_integrate_subclasses_as_enumerations(self):
+        class Placeholder(object):
+            __metaclass__ = self.duo.EnumMeta
+
+        class Foo(Placeholder): pass
+
+        class Bar(Placeholder): pass
+
+        class Baz(Placeholder): pass
+
+        self.assertEqual(int(Foo), 0)
+        self.assertEqual(unicode(Foo), u'Foo')
+        self.assertIs(Placeholder[0], Foo)
+        self.assertIs(Placeholder['Foo'], Foo)
+        self.assertIs(Placeholder.Foo, Foo)
+
+        self.assertEqual(int(Bar), 1)
+        self.assertEqual(unicode(Bar), u'Bar')
+        self.assertIs(Placeholder[1], Bar)
+        self.assertIs(Placeholder['Bar'], Bar)
+        self.assertIs(Placeholder.Bar, Bar)
+
+        self.assertEqual(int(Baz), 2)
+        self.assertEqual(unicode(Baz), u'Baz')
+        self.assertIs(Placeholder[2], Baz)
+        self.assertIs(Placeholder['Baz'], Baz)
+        self.assertIs(Placeholder.Baz, Baz)
+
+    def test_choice_fields_should_always_cast_to_unicode(self):
+        class Placeholder(object):
+            __metaclass__ = self.duo.EnumMeta
+
+        class Foo(Placeholder): pass
+
+        class Bar(Placeholder): pass
+
+        class Baz(Placeholder): pass
+
+        class TestItemSubclass(self.duo.Item):
+            table_name = self.table_name
+
+            place = self.duo.ChoiceField(enum_type=Placeholder)
+
+        table = self.db[self.table_name]
+        item = table[self.hash_key_value, self.range_key_value]
+
+        self.assertIsInstance(item, TestItemSubclass)
+        self.assertEqual(item[self.hash_key_name], self.hash_key_value)
+
+        with self.assertRaises(KeyError):
+            item.place = 'bar'
+
+        item.place = 'Bar'
+        self.assertIsInstance(item['place'], unicode)
+        self.assertEqual(item['place'], 'Bar')
+        self.assertIs(item.place, Bar)
+
+    def test_enum_fields_should_always_cast_to_an_int(self):
+        class Placeholder(object):
+            __metaclass__ = self.duo.EnumMeta
+
+        class Foo(Placeholder): pass
+
+        class Bar(Placeholder): pass
+
+        class Baz(Placeholder): pass
+
+        class TestItemSubclass(self.duo.Item):
+            table_name = self.table_name
+
+            place = self.duo.EnumField(enum_type=Placeholder)
+
+        table = self.db[self.table_name]
+        item = table[self.hash_key_value, self.range_key_value]
+
+        self.assertIsInstance(item, TestItemSubclass)
+        self.assertEqual(item[self.hash_key_name], self.hash_key_value)
+
+        with self.assertRaises(KeyError):
+            item.place = 'bar'
+
+        item.place = 'Bar'
+        self.assertIsInstance(item['place'], int)
+        self.assertEqual(item['place'], 1)
+        self.assertIs(item.place, Bar)
