@@ -4,7 +4,7 @@
 from setuptools import setup
 
 setup(
-    name = "crossway-duo",
+    name = "duo",
     py_modules = ['duo'],
     install_requires = [
         'boto>=2.5.2',
