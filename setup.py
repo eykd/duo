@@ -18,7 +18,7 @@ TESTS_REQUIRE = [
 
 SETUP = dict(
     name = "duo",
-    py_modules = ['duo'],
+    py_modules = ['duo', 'test_duo'],
     install_requires = INSTALL_REQUIRES,
     tests_require = TESTS_REQUIRE,
     test_suite = 'nose.collector',
