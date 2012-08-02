@@ -193,6 +193,23 @@ class DynamoDBTests(unittest.TestCase):
         self.assertEqual(item['foo'], today.toordinal())
         self.assertEqual(item.foo, today)
 
+    def test_date_fields_should_accept_None_as_a_null_value(self):
+        class TestItemSubclass(self.duo.Item):
+            table_name = self.table_name
+
+            foo = self.duo.DateField()
+
+        table = self.db[self.table_name]
+        item = table[self.hash_key_value, self.range_key_value]
+
+        self.assertIsInstance(item, TestItemSubclass)
+        self.assertEqual(item[self.hash_key_name], self.hash_key_value)
+
+        item.foo = None
+        self.assertIsInstance(item['foo'], int)
+        self.assertEqual(item['foo'], 0)
+        self.assertEqual(item.foo, None)
+
     def test_enum_classes_should_integrate_subclasses_as_enumerations(self):
         class Placeholder(object):
             __metaclass__ = self.duo.EnumMeta

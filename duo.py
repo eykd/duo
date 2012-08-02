@@ -178,10 +178,13 @@ class Table(object):
                 )
 
 
+class NONE(object): pass
+
+
 class Field(object):
     name = None
     
-    def __init__(self, default=None, readonly=False):
+    def __init__(self, default=NONE, readonly=False):
         self.default = default
         self.readonly = readonly
         super(Field, self).__init__()
@@ -196,7 +199,7 @@ class Field(object):
         try:
             value = obj[self.name]
         except KeyError:
-            if self.default is not None:
+            if self.default is not NONE:
                 value = self.default
             else:
                 raise AttributeError(self.name)
@@ -267,9 +270,15 @@ class EnumField(_ChoiceMixin, IntField):
 
 class DateField(Field):
     def to_python(self, value):
+        if value is 0:
+            return None
+
         return datetime.date.fromordinal(value)
 
     def from_python(self, value):
+        if value is None:
+            return 0
+        
         try:
             return value.toordinal()
         except AttributeError:
