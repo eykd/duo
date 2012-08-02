@@ -231,6 +231,21 @@ class DuoTests(DynamoDBTests):
         self.assertEqual(item['foo'], 0)
         self.assertEqual(item.foo, None)
 
+    def test_date_fields_should_work_with_default_of_None(self):
+        class TestItemSubclass(self.duo.Item):
+            table_name = self.table_name
+
+            foo = self.duo.DateField(default=None)
+
+        table = self.db[self.table_name]
+        item = table[self.hash_key_value, self.range_key_value]
+
+        self.assertIsInstance(item, TestItemSubclass)
+        self.assertEqual(item[self.hash_key_name], self.hash_key_value)
+
+        self.assertFalse('foo' in item)
+        self.assertEqual(item.foo, None)
+
     def test_enum_classes_should_integrate_subclasses_as_enumerations(self):
         class Placeholder(object):
             __metaclass__ = self.duo.EnumMeta

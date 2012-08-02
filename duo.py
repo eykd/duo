@@ -270,13 +270,13 @@ class EnumField(_ChoiceMixin, IntField):
 
 class DateField(Field):
     def to_python(self, value):
-        if value is 0:
+        if value is None or value == 0:
             return None
 
         return datetime.date.fromordinal(value)
 
     def from_python(self, value):
-        if value is None:
+        if value is None or value == 0:
             return 0
         
         try:
