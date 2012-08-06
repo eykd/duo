@@ -180,8 +180,10 @@ class Table(object):
         except DynamoDBKeyNotFoundError:
             return self.create(hash_key, range_key)
 
-    def query(self, hash_key, range_key_condition=None, attributes_to_get=None, request_limit=None,
-              max_results=None, consistent_read=False, scan_index_forward=True, exclusive_start_key=None):
+    def query(self, hash_key, range_key_condition=None,
+              attributes_to_get=None, request_limit=None,
+              max_results=None, consistent_read=False,
+              scan_index_forward=True, exclusive_start_key=None):
         """Perform a query on the table.
 
         Returns items using the registered subclass, if one has been registered.
