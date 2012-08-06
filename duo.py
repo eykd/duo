@@ -166,15 +166,18 @@ class Table(object):
             range_key = None
 
         try:
-            if range_key is not None:
-                return self.table.get_item(
-                    hash_key = hash_key,
-                    range_key = range_key,
-                    item_class = Item._table_types[self.table_name],
-                    )
+            if range_key is None:
+                if self.range_key_name is None:
+                    return self.table.get_item(
+                        hash_key = hash_key,
+                        item_class = Item._table_types[self.table_name],
+                        )
+                else:
+                    return self.query(hash_key)
             else:
                 return self.table.get_item(
                     hash_key = hash_key,
+                    range_key = range_key,
                     item_class = Item._table_types[self.table_name],
                     )
         except DynamoDBKeyNotFoundError:
