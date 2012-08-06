@@ -245,7 +245,12 @@ class Field(object):
         elif self.readonly:
             raise AttributeError('`%s` is read-only!' % self.name)
         else:
-            obj[self.name] = self.from_python(value)
+            if value is None:
+                # If value is None and the attribute exists, clear it.
+                if self.name in obj:
+                    del obj[self.name]
+            else:
+                obj[self.name] = self.from_python(value)
 
     def __delete__(self, obj):
         if self.name == getattr(obj, 'hash_key_name'):
