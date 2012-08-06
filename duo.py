@@ -165,20 +165,20 @@ class Table(object):
             hash_key = key
             range_key = None
 
-        if range_key is not None:
-            try:
+        try:
+            if range_key is not None:
                 return self.table.get_item(
                     hash_key = hash_key,
                     range_key = range_key,
                     item_class = Item._table_types[self.table_name],
                     )
-            except DynamoDBKeyNotFoundError:
-                return self.create(hash_key, range_key)
-        else:
-            return self.table.query(
-                hash_key = hash_key,
-                item_class = Item._table_types[self.table_name],
-                )
+            else:
+                return self.table.get_item(
+                    hash_key = hash_key,
+                    item_class = Item._table_types[self.table_name],
+                    )
+        except DynamoDBKeyNotFoundError:
+            return self.create(hash_key, range_key)
 
     def query(self, hash_key, range_key_condition=None, attributes_to_get=None, request_limit=None,
               max_results=None, consistent_read=False, scan_index_forward=True, exclusive_start_key=None):
