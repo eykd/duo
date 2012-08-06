@@ -60,6 +60,9 @@ class EnumMeta(type):
         except AttributeError:
             raise ValueError("'%s' does not support integer casting.")
 
+    def __nonzero__(cls):
+        return bool(int(cls))
+
     def __cmp__(self, other):
         if isinstance(other, basestring):
             return cmp(str(self), other)
