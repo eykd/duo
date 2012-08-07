@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """duo -- a powerful, dynamic, pythonic interface to AWS DynamoDB.
 """
+import warnings
 import collections
 import datetime
 
@@ -83,10 +84,11 @@ class EnumMeta(type):
 
 
 class DynamoDB(object):
-    def __init__(self, key, secret):
+    def __init__(self, key, secret, cache=None):
         self.key = key
         self.secret = secret
         self._tables = {}
+        self.cache = cache
     
     @property
     def connection(self):
@@ -106,7 +108,7 @@ class DynamoDB(object):
         if table_name not in self._tables:
             self._tables[table_name] = self.connection.get_table(table_name)
         
-        table = Table._table_types[table_name](self._tables[table_name])
+        table = Table._table_types[table_name](self._tables[table_name], cache=self.cache)
         table.table_name = table_name
         return table
 
@@ -135,6 +137,49 @@ class Item(_Item):
     __metaclass__ = _TableMeta
 
     table_name = None
+    cache_duration = None
+    is_new = False
+
+    @property
+    def _cache_key(self):
+        return self._duo_table._get_cache_key(self.hash_key, self.range_key)
+
+    def _set_cache(self):
+        if self.cache is not None:
+            table = self._duo_table
+            key = table._get_cache_key(self.hash_key, self.range_key)
+            self.cache.set(key, self.items(),
+                           time=self.cache_duration if self.cache_duration is not None else table.cache_duration)
+
+    def _delete_cache(self):
+        if self.cache is not None:
+            table = self._duo_table
+            key = table._get_cache_key(self.hash_key, self.range_key)
+            self.cache.delete(key)
+
+    def put(self, *args, **kwargs):
+        result = super(Item, self).put(*args, **kwargs)
+        try:
+            self._set_cache()
+        except Exception as e:
+            warnings.warn('Cache write-through failed on put(). %s: %s' % (e.__class__.__name__, e.message))
+        return result
+
+    def save(self, *args, **kwargs):
+        result = super(Item, self).save(*args, **kwargs)
+        try:
+            self._set_cache()
+        except Exception as e:
+            warnings.warn('Cache write-through failed on save(). %s: %s' % (e.__class__.__name__, e.message))
+        return result
+
+    def delete(self, *args, **kwargs):
+        result = super(Item, self).delete(*args, **kwargs)
+        try:
+            self._delete_cache()
+        except Exception as e:
+            warnings.warn('Cache write-through failed on delete(). %s: %s' % (e.__class__.__name__, e.message))
+        return result
 
 
 class Table(object):
@@ -144,8 +189,14 @@ class Table(object):
     hash_key_name = None
     range_key_name = None
 
-    def __init__(self, table):
+    cache = None
+    cache_duration = 0  # Default to cache-forever
+    cache_prefix = None
+
+    def __init__(self, table, cache=None):
         self.table = table
+        if self.cache is None:
+            self.cache = cache
         super(Table, self).__init__()
 
     def keys(self):
@@ -166,8 +217,44 @@ class Table(object):
             attrs = kwargs,
             item_class = Item._table_types[self.table_name],
             )
-        item.is_new = True
+        return self._extend(item, is_new=True)
+
+    def _extend(self, item, is_new=False):
+        item.is_new = is_new
+        item.cache = self.cache
+        item._duo_table = self
         return item
+
+    def _extend_iter(self, items, is_new=False):
+        for item in items:
+            item.is_new = is_new
+            item.cache = self.cache
+            yield item
+
+    @classmethod
+    def _get_cache_key(cls, hash_key, range_key):
+        if range_key is None:
+            key = '%s_%s' % (cls.cache_prefix or cls.table_name, hash_key)
+        else:
+            key = '%s_%s_%s' % (cls.cache_prefix or cls.table_name, hash_key, range_key)
+        return key
+
+    def _get_cache(self, hash_key, range_key=None):
+        if self.cache is None:
+            return None
+        else:
+            key = self._get_cache_key(hash_key, range_key)
+            cached = self.cache.get(key)
+            if cached is not None:
+                # Build an Item.
+                cached = self._extend(
+                    Item._table_types[self.table_name](
+                        self.table,
+                        hash_key = hash_key,
+                        range_key = range_key,
+                        attrs = dict(cached)
+                        ))
+            return cached
 
     def __getitem__(self, key):
         if isinstance(key, tuple):
@@ -176,23 +263,35 @@ class Table(object):
             hash_key = key
             range_key = None
 
+        # Check the cache first.
+        cached = self._get_cache(hash_key, range_key)
+        if cached is not None:
+            return cached
+
         try:
             if range_key is None:
                 if self.range_key_name is None:
-                    return self.table.get_item(
-                        hash_key = hash_key,
-                        item_class = Item._table_types[self.table_name],
-                        )
+                    item = self._extend(
+                        self.table.get_item(
+                            hash_key = hash_key,
+                            item_class = Item._table_types[self.table_name],
+                            ))
                 else:
-                    return self.query(hash_key)
+                    return self._extend_iter(self.query(hash_key))
             else:
-                return self.table.get_item(
-                    hash_key = hash_key,
-                    range_key = range_key,
-                    item_class = Item._table_types[self.table_name],
-                    )
+                item = self._extend(
+                    self.table.get_item(
+                        hash_key = hash_key,
+                        range_key = range_key,
+                        item_class = Item._table_types[self.table_name],
+                        ))
         except DynamoDBKeyNotFoundError:
-            return self.create(hash_key, range_key)
+            item = self.create(hash_key, range_key)
+
+        if hasattr(item, 'is_new') and not item.is_new:
+            item._set_cache()
+
+        return item
 
     def query(self, hash_key, range_key_condition=None,
               attributes_to_get=None, request_limit=None,
