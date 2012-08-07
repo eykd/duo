@@ -137,6 +137,7 @@ class Item(_Item):
     __metaclass__ = _TableMeta
 
     table_name = None
+    cache = None
     cache_duration = None
     is_new = False
 
