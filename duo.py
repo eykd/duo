@@ -147,6 +147,17 @@ class Table(object):
     def __init__(self, table):
         self.table = table
         super(Table, self).__init__()
+
+    def keys(self):
+        """Return an iterator of object keys, either by `hash_key` or `(hash_key, range_key)`.
+
+        WARNING: This performs a table scan, which can be expensive on a large table.
+        """
+        if self.range_key_name is None:
+            return (i[self.hash_key_name] for i in self.scan(attributes_to_get=[self.hash_key_name]))
+        else:
+            return ((i[self.hash_key_name], i[self.range_key_name])
+                    for i in self.scan(attributes_to_get=[self.hash_key_name, self.range_key_name]))
     
     def create(self, hash_key, range_key=None, **kwargs):
         item = self.table.new_item(
