@@ -4,6 +4,7 @@
 import warnings
 import collections
 import datetime
+import json
 
 import boto
 from boto.dynamodb.item import Item as _Item
@@ -108,7 +109,7 @@ class DynamoDB(object):
         if table_name not in self._tables:
             self._tables[table_name] = self.connection.get_table(table_name)
         
-        table = Table._table_types[table_name](self._tables[table_name], cache=self.cache)
+        table = Table._table_types[table_name](self, self._tables[table_name], cache=self.cache)
         table.table_name = table_name
         return table
 
@@ -136,25 +137,35 @@ class _TableMeta(type):
 class Item(_Item):
     __metaclass__ = _TableMeta
 
+    duo_db = None
+    duo_table = None
+    
     table_name = None
     cache = None
     cache_duration = None
     is_new = False
 
     @property
+    def dynamo_key(self):
+        if self.range_key_name is None:
+            return self.hash_key
+        else:
+            return (self.hash_key, self.range_key)
+
+    @property
     def _cache_key(self):
-        return self._duo_table._get_cache_key(self.hash_key, self.range_key)
+        return self.duo_table._get_cache_key(self.hash_key, self.range_key)
 
     def _set_cache(self):
-        if self.cache is not None:
-            table = self._duo_table
+        if self.cache is not None and self.cache_duration is not None:
+            table = self.duo_table
             key = table._get_cache_key(self.hash_key, self.range_key)
             self.cache.set(key, self.items(),
                            time=self.cache_duration if self.cache_duration is not None else table.cache_duration)
 
     def _delete_cache(self):
         if self.cache is not None:
-            table = self._duo_table
+            table = self.duo_table
             key = table._get_cache_key(self.hash_key, self.range_key)
             self.cache.delete(key)
 
@@ -194,10 +205,10 @@ class Table(object):
     range_key_name = None
 
     cache = None
-    cache_duration = 0  # Default to cache-forever
     cache_prefix = None
 
-    def __init__(self, table, cache=None):
+    def __init__(self, db, table, cache=None):
+        self.duo_db = db
         self.table = table
         if self.cache is None:
             self.cache = cache
@@ -226,14 +237,13 @@ class Table(object):
     def _extend(self, item, is_new=False):
         item.is_new = is_new
         item.cache = self.cache
-        item._duo_table = self
+        item.duo_table = self
+        item.duo_db = self.duo_db
         return item
 
     def _extend_iter(self, items, is_new=False):
         for item in items:
-            item.is_new = is_new
-            item.cache = self.cache
-            yield item
+            yield self._extend(item, is_new)
 
     @classmethod
     def _get_cache_key(cls, hash_key, range_key):
@@ -438,3 +448,20 @@ class DateField(Field):
             return value.toordinal()
         except AttributeError:
             raise ValueError('DateField requires a `datetime.date` object.')
+
+
+class ForeignKeyField(Field):
+    def to_python(self, value):
+        fk_dict = json.loads(value)
+        table_name = fk_dict['table']
+        key = fk_dict['key']
+        if isinstance(key, list):
+            key = tuple(key)
+        table = self.duo_db[table_name]
+        return table[key]
+
+    def from_python(self, value):
+        return {
+            'table': value.table_name,
+            'key': value.dynamo_key
+            }
