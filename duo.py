@@ -160,6 +160,7 @@ class Item(_Item):
 
     def put(self, *args, **kwargs):
         result = super(Item, self).put(*args, **kwargs)
+        self.is_new = False
         try:
             self._set_cache()
         except Exception as e:
@@ -168,6 +169,7 @@ class Item(_Item):
 
     def save(self, *args, **kwargs):
         result = super(Item, self).save(*args, **kwargs)
+        self.is_new = False
         try:
             self._set_cache()
         except Exception as e:
@@ -176,6 +178,7 @@ class Item(_Item):
 
     def delete(self, *args, **kwargs):
         result = super(Item, self).delete(*args, **kwargs)
+        self.is_new = True
         try:
             self._delete_cache()
         except Exception as e:
