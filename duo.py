@@ -357,14 +357,20 @@ class Field(object):
 
     def __get__(self, obj, type=None):
         try:
-            value = obj[self.name]
+            value = self.to_python(obj[self.name])
         except KeyError:
             if self.default is not NONE:
-                value = self.default
+                if callable(self.default) and not isinstance(self.default, EnumMeta):
+                    value = self.default(obj)
+                else:
+                    value = self.default
+                value = self.to_python(value)
+                # Populate the default on the object.
+                setattr(obj, self.name, value)
             else:
                 raise AttributeError(self.name)
 
-        return self.to_python(value)
+        return value
 
     def __set__(self, obj, value):
         if self.name == getattr(obj, 'hash_key_name'):
@@ -452,7 +458,13 @@ class DateField(Field):
 
 class ForeignKeyField(Field):
     def to_python(self, value):
-        fk_dict = json.loads(value)
+        if isinstance(value, Item):
+            return value
+        
+        elif isinstance(value, dict):
+            fk_dict = value        
+        else:
+            fk_dict = json.loads(value)
         table_name = fk_dict['table']
         key = fk_dict['key']
         if isinstance(key, list):
