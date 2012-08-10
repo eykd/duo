@@ -160,8 +160,8 @@ class Item(_Item):
         if self.cache is not None and self.cache_duration is not None:
             table = self.duo_table
             key = table._get_cache_key(self.hash_key, self.range_key)
-            self.cache.set(key, self.items(),
-                           time=self.cache_duration if self.cache_duration is not None else table.cache_duration)
+            duration = self.cache_duration if self.cache_duration is not None else table.cache_duration
+            self.cache.set(key, self.items(), duration)
 
     def _delete_cache(self):
         if self.cache is not None:
@@ -369,22 +369,22 @@ class Field(object):
         self.readonly = readonly
         super(Field, self).__init__()
     
-    def to_python(self, value):
+    def to_python(self, obj, value):
         raise NotImplementedError()
 
-    def from_python(self, value):
+    def from_python(self, obj, value):
         raise NotImplementedError()
 
     def __get__(self, obj, type=None):
         try:
-            value = self.to_python(obj[self.name])
+            value = self.to_python(obj, obj[self.name])
         except KeyError:
             if self.default is not NONE:
                 if callable(self.default) and not isinstance(self.default, EnumMeta):
                     value = self.default(obj)
                 else:
                     value = self.default
-                value = self.to_python(value)
+                value = self.to_python(obj, value)
                 # Populate the default on the object.
                 setattr(obj, self.name, value)
             else:
@@ -405,7 +405,7 @@ class Field(object):
                 if self.name in obj:
                     del obj[self.name]
             else:
-                obj[self.name] = self.from_python(value)
+                obj[self.name] = self.from_python(obj, value)
 
     def __delete__(self, obj):
         if self.name == getattr(obj, 'hash_key_name'):
@@ -419,18 +419,18 @@ class Field(object):
 
 
 class UnicodeField(Field):
-    def to_python(self, value):
+    def to_python(self, obj, value):
         return value
 
-    def from_python(self, value):
+    def from_python(self, obj, value):
         return unicode(value)
 
 
 class IntField(Field):
-    def to_python(self, value):
+    def to_python(self, obj, value):
         return value
 
-    def from_python(self, value):
+    def from_python(self, obj, value):
         return int(value)
 
 
@@ -441,32 +441,32 @@ class _ChoiceMixin(Field):
         self.enum_type = kwargs.pop('enum_type')
         super(_ChoiceMixin, self).__init__(**kwargs)
 
-    def to_python(self, value):
+    def to_python(self, obj, value):
         return self.enum_type[value]
 
 
 class ChoiceField(_ChoiceMixin, UnicodeField):
     """A unicode field that enforces a set of possible values, using an Enum.
     """
-    def from_python(self, value):
+    def from_python(self, obj, value):
         return unicode(self.enum_type[value])
     
 
 class EnumField(_ChoiceMixin, IntField):
     """An integer field that enforces a set of possible values, using an Enum.
     """
-    def from_python(self, value):
+    def from_python(self, obj, value):
         return int(self.enum_type[value])
 
 
 class DateField(Field):
-    def to_python(self, value):
+    def to_python(self, obj, value):
         if value is None or value == 0:
             return None
 
         return datetime.date.fromordinal(value)
 
-    def from_python(self, value):
+    def from_python(self, obj, value):
         if value is None or value == 0:
             return 0
         
@@ -477,7 +477,7 @@ class DateField(Field):
 
 
 class ForeignKeyField(Field):
-    def to_python(self, value):
+    def to_python(self, obj, value):
         if isinstance(value, Item):
             return value
         
@@ -489,11 +489,11 @@ class ForeignKeyField(Field):
         key = fk_dict['key']
         if isinstance(key, list):
             key = tuple(key)
-        table = self.duo_db[table_name]
+        table = obj.duo_db[table_name]
         return table[key]
 
-    def from_python(self, value):
-        return {
+    def from_python(self, obj, value):
+        return json.dumps({
             'table': value.table_name,
             'key': value.dynamo_key
-            }
+            })
