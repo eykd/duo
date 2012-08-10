@@ -6,3 +6,142 @@ with Amazon Web Services' DynamoDB. It's a very light wrapper around
 `boto.dynamodb.layer2`, so you have full access to that excellent
 library when you need it, but you don't have to sweat the details when
 you don't.
+
+
+Usage:
+------
+
+`duo` is made up of one module.
+
+    >>> import duo
+
+
+Pre-create your tables in the AWS console, then write simple classes
+to access them. `duo.Table` Sub-classes are automatically registered
+with the db::
+
+    >>> class MyHashKeyTable(duo.Table):
+    ...     table_name = 'my_hashkey_table'
+    ...     hash_key_name = 'slug'
+    ...     range_key_name = None  # Implicit default
+
+
+`duo.Item` is a thin wrapper around `boto.dynamodb.items.Item`, with
+lots of syntactic sugar. `duo.Item` sub-classs are automatically
+registered with the db::
+
+    >>> import datetime
+
+    >>> class MyHashKeyItem(duo.Item):
+    ...     table_name = 'my_hashkey_table'
+    ...     hash_key_name = 'slug'
+    ... 
+    ...     slug = duo.UnicodeField()
+    ...     my_field = duo.UnicodeField(default='foo')
+    ...     on_this_date = duo.DateField(default=lambda o: datetime.date.today())
+
+
+Databases and Tables use dict-like access syntax::
+
+
+    >>> db = duo.DynamoDB(key='access_key', secret='secret_key')
+
+    >>> # The correct Table sub-class is matched by table name:
+    >>> table = duo.DynamoDB['my_hashkey_table']
+
+    >>> # The correct Item sub-class is matched by table name:
+    >>> item = table['new-item']
+
+    >>> # Items are actually dict subclasses, but that's not where the
+    >>> # fun is. They can only store unicode strings and integers:
+    >>> item['slug']
+    u'new-item'
+
+
+Specify a field on an Item sub-class to get useful data types::
+
+    >>> item.is_new
+    True
+
+    >>> # A field doesn't exist initially...
+    >>> item['my_field']
+    Traceback (most recent call last):
+      File "...", line 1, in <module>
+        item['my_field']
+    KeyError: 'my_field'
+
+    >>> # But we specified a default.
+    >>> item.my_field
+    'foo'
+
+    >>> # The default, once accessed, gets populated:
+    >>> item['my_field']
+    'foo'
+
+    >>> # Or we can set our own value...
+    >>> item.my_field = 'bar'
+
+    >>> item['my_field']
+    'bar'
+
+    >>> # Finally, we save it to DynamoDB.
+    >>> item.put()
+
+    >>> item.is_new
+    False
+
+
+Caching:
+--------
+
+Duo integrates with any cache that implements a `python-memcached`\
+-compatible interface, namely, the following::
+
+    import pylibmc
+    cache = pylibmc.Client(['127.0.0.1'])
+    cache.get(<keyname>)
+    cache.set(<keyname>, <duration-in-seconds>)
+    cache.delete(<keyname>)
+
+Integrate caching by passing the cache to the db constructor::
+
+    >>> import duo
+    >>> db = duo.DynamoDB(key='access_key', secret='secret_key', cache=cache)
+
+You can also specify a cache object on a per-table or per-item basis:
+
+
+    >>> class MyHashKeyTable(duo.Table):
+    ...     cache = pylibmc.Client(['127.0.0.1'])
+    ...
+    ...     table_name = 'my_hashkey_table'
+    ...     hash_key_name = 'slug'
+    ...     range_key_name = None  # Implicit default
+
+
+Caching is turned off by default, but you can turn it on by specifying
+a `cache_duration` as an integer (0 is forever)::
+
+    >>> class MyHashKeyItem(duo.Item):
+    ...     cache_duration = 30  # 30 seconds
+    ...
+    ...     table_name = 'my_hashkey_table'
+    ...     hash_key_name = 'slug'
+    ... 
+    ...     slug = duo.UnicodeField()
+    ...     my_field = duo.UnicodeField(default='foo')
+    ...     on_this_date = duo.DateField(default=lambda o: datetime.date.today())
+
+
+Cache keys are determined by hash key, range key, and a cache prefix
+(set on the Table). By default, the cache prefix is the table name.
+
+    >>> table = duo.DynamoDB['my_hashkey_table']
+    >>> item = table['new-item']
+    >>> item.cache_prefix is None
+    True
+    >>>item._cache_key
+    'my_hashkey_table_new-item'
+    >>> MyHashKeyTable.cache_prefix = 'hello_world'
+    >>> item._get_cache_key()
+    'hello_world_new-item'
