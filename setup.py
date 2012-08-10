@@ -28,7 +28,7 @@ SETUP = dict(
         },
     zip_safe = False,
 
-    version = "0.1",
+    version = "0.1.1",
     description = "A powerful, dynamic, pythonic interface to AWS DynamoDB.",
     long_description = open('README.rst').read(),
     author = "David Eyk",
