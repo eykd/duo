@@ -85,6 +85,8 @@ class EnumMeta(type):
 
 
 class DynamoDB(object):
+    """DB object for managing a connection to DynamoDB and looking up custom Table handlers.
+    """
     def __init__(self, key, secret, cache=None):
         self.key = key
         self.secret = secret
@@ -93,6 +95,8 @@ class DynamoDB(object):
     
     @property
     def connection(self):
+        """Lazy-load a boto DynamoDB connection.
+        """
         if not hasattr(self, '_connection'):
             self._connection = boto.connect_dynamodb(
                 aws_access_key_id=self.key,
@@ -101,6 +105,8 @@ class DynamoDB(object):
         return self._connection
 
     def reset(self):
+        """Reset the DynamoDB connection and clear any cached tables.
+        """
         if hasattr(self, '_connection'):
             del self._connection
         self._tables.clear()
@@ -135,6 +141,11 @@ class _TableMeta(type):
 
 
 class Item(_Item):
+    """A boto DynamoDB Item, with caching secret sauce.
+
+    Subclass to customize fields and caching behavior. Subclassing
+    auto-registers with the DB.
+    """
     __metaclass__ = _TableMeta
 
     duo_db = None
@@ -147,6 +158,11 @@ class Item(_Item):
 
     @property
     def dynamo_key(self):
+        """Return the hash_key or (hash_key, range_key) key.
+
+        The returned value is suitable for looking up the item in the
+        table via __getitem__(key)
+        """
         if self.range_key_name is None:
             return self.hash_key
         else:
@@ -154,9 +170,13 @@ class Item(_Item):
 
     @property
     def _cache_key(self):
+        """Determine the key for accessing the item in the cache.
+        """
         return self.duo_table._get_cache_key(self.hash_key, self.range_key)
 
     def _set_cache(self):
+        """Store the item in the cache.
+        """
         if self.cache is not None and self.cache_duration is not None:
             table = self.duo_table
             key = table._get_cache_key(self.hash_key, self.range_key)
@@ -164,12 +184,16 @@ class Item(_Item):
             self.cache.set(key, self.items(), duration)
 
     def _delete_cache(self):
+        """Remove the item from the cache.
+        """
         if self.cache is not None:
             table = self.duo_table
             key = table._get_cache_key(self.hash_key, self.range_key)
             self.cache.delete(key)
 
     def put(self, *args, **kwargs):
+        """Put the item in the database, and also in the cache.
+        """
         result = super(Item, self).put(*args, **kwargs)
         self.is_new = False
         try:
@@ -179,6 +203,8 @@ class Item(_Item):
         return result
 
     def save(self, *args, **kwargs):
+        """Save the item in the database, and also in the cache.
+        """
         result = super(Item, self).save(*args, **kwargs)
         self.is_new = False
         try:
@@ -188,6 +214,8 @@ class Item(_Item):
         return result
 
     def delete(self, *args, **kwargs):
+        """Delete the item from the database, and also from the cache.
+        """
         result = super(Item, self).delete(*args, **kwargs)
         self.is_new = True
         try:
@@ -198,6 +226,11 @@ class Item(_Item):
 
 
 class Table(object):
+    """A DynamoDB Table, with super dict-like powers.
+
+    Subclass to customize behavior. Subclassing auto-registers with
+    the DB.
+    """
     __metaclass__ = _TableMeta
     
     table_name = None
@@ -246,6 +279,8 @@ class Table(object):
         return self.scan()
 
     def create(self, hash_key, range_key=None, **kwargs):
+        """Create an item given the specified attributes.
+        """
         item = self.table.new_item(
             hash_key = hash_key,
             range_key = range_key,
@@ -255,6 +290,8 @@ class Table(object):
         return self._extend(item, is_new=True)
 
     def _extend(self, item, is_new=False):
+        """Extend the given Item with some necessary attributes.
+        """
         item.is_new = is_new
         item.cache = self.cache
         item.duo_table = self
@@ -262,11 +299,17 @@ class Table(object):
         return item
 
     def _extend_iter(self, items, is_new=False):
+        """Extend a collection of Items with some necessary attributes.
+        """
         for item in items:
             yield self._extend(item, is_new)
 
     @classmethod
     def _get_cache_key(cls, hash_key, range_key):
+        """Determine the cache key for a given table key.
+
+        Specify `range_key=None` for a hash-only key.
+        """
         if range_key is None:
             key = '%s_%s' % (cls.cache_prefix or cls.table_name, hash_key)
         else:
@@ -274,6 +317,8 @@ class Table(object):
         return key
 
     def _get_cache(self, hash_key, range_key=None):
+        """Retrieve the specified item from the cache, if available.
+        """
         if self.cache is None:
             return None
         else:
@@ -362,6 +407,8 @@ class NONE(object): pass
 
 
 class Field(object):
+    """A Field acts as a data descriptor on Item subclasses.
+    """
     name = None
     
     def __init__(self, default=NONE, readonly=False):
@@ -419,6 +466,8 @@ class Field(object):
 
 
 class UnicodeField(Field):
+    """Store a simple unicode string as a native DynamoDB string.
+    """
     def to_python(self, obj, value):
         return value
 
@@ -427,6 +476,8 @@ class UnicodeField(Field):
 
 
 class IntField(Field):
+    """Store a simple integer as a native DynamoDB integer.
+    """
     def to_python(self, obj, value):
         return value
 
@@ -460,6 +511,8 @@ class EnumField(_ChoiceMixin, IntField):
 
 
 class DateField(Field):
+    """An integer field that stores `datetime.date` objects as ordinal integers.
+    """
     def to_python(self, obj, value):
         if value is None or value == 0:
             return None
@@ -477,6 +530,8 @@ class DateField(Field):
 
 
 class ForeignKeyField(Field):
+    """A unicode field that stores foreign DynamoDB table references as a JSON-serialized string.
+    """
     def to_python(self, obj, value):
         if isinstance(value, Item):
             return value
