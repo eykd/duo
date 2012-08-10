@@ -5,7 +5,7 @@ import sys
 
 from setuptools import setup
 
-PYVERSION = float('%s.%s' % (sys.version_info.major, sys.version_info.minor))
+PYVERSION = float('%s.%s' % (sys.version_info[0], sys.version_info[1]))
 
 INSTALL_REQUIRES = [
     'boto>=2.5.2',
