@@ -15,6 +15,8 @@ Usage:
 
     >>> import duo
 
+The module isn't very big (at the time of this writing, ~550
+lines). If you want to know how something works, you should read it.
 
 Pre-create your tables in the AWS console, then write simple classes
 to access them. `duo.Table` Sub-classes are automatically registered
