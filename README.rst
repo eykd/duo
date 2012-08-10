@@ -11,7 +11,7 @@ you don't.
 Usage:
 ------
 
-`duo` is made up of one module.
+`duo` is made up of one module::
 
     >>> import duo
 
@@ -42,7 +42,6 @@ registered with the db::
 
 
 Databases and Tables use dict-like access syntax::
-
 
     >>> db = duo.DynamoDB(key='access_key', secret='secret_key')
 
@@ -108,10 +107,9 @@ Integrate caching by passing the cache to the db constructor::
     >>> import duo
     >>> db = duo.DynamoDB(key='access_key', secret='secret_key', cache=cache)
 
-You can also specify a cache object on a per-table or per-item basis:
+You can also specify a cache object on a per-table or per-item basis::
 
-
-    >>> class MyHashKeyTable(duo.Table):
+   >>> class MyHashKeyTable(duo.Table):
     ...     cache = pylibmc.Client(['127.0.0.1'])
     ...
     ...     table_name = 'my_hashkey_table'
@@ -134,7 +132,7 @@ a `cache_duration` as an integer (0 is forever)::
 
 
 Cache keys are determined by hash key, range key, and a cache prefix
-(set on the Table). By default, the cache prefix is the table name.
+(set on the Table). By default, the cache prefix is the table name::
 
     >>> table = duo.DynamoDB['my_hashkey_table']
     >>> item = table['new-item']
