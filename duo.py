@@ -432,8 +432,9 @@ class Field(object):
                 else:
                     value = self.default
                 value = self.to_python(obj, value)
-                # Populate the default on the object.
-                setattr(obj, self.name, value)
+                if value:
+                    # Populate the default on the object.
+                    setattr(obj, self.name, value)
             else:
                 raise AttributeError(self.name)
 
