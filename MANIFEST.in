@@ -1,1 +1,2 @@
 recursive-include duo *.html *.txt *.rst
+include *.rst
