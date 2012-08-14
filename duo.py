@@ -476,7 +476,7 @@ class UnicodeField(Field):
         return unicode(value)
 
 
-class IntField(Field):
+class IntegerField(Field):
     """Store a simple integer as a native DynamoDB integer.
     """
     def to_python(self, obj, value):
@@ -484,6 +484,9 @@ class IntField(Field):
 
     def from_python(self, obj, value):
         return int(value)
+
+
+IntField = IntegerField
 
 
 class _ChoiceMixin(Field):
