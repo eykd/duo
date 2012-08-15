@@ -222,7 +222,7 @@ class Item(_Item):
         """Put the item in the database, but only if the original values still hold.
         """
         kwargs['expected_value'] = self.get_expected()
-        self.put(*args, **kwargs)
+        return self.put(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         """Save the item in the database, and also in the cache.
@@ -239,7 +239,7 @@ class Item(_Item):
         """Save the updated item in the database, but only if the original values still hold.
         """
         kwargs['expected_value'] = self.get_expected()
-        self.save(*args, **kwargs)
+        return self.save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         """Delete the item from the database, and also from the cache.
