@@ -4,6 +4,7 @@
 import warnings
 import collections
 import datetime
+import time
 import json
 
 import boto
@@ -531,6 +532,25 @@ class DateField(Field):
             return value.toordinal()
         except AttributeError:
             raise ValueError('DateField requires a `datetime.date` object.')
+
+
+class DateTimeField(Field):
+    """An integer field that stores `datetime.datedatetime` objects as unix timestamps.
+    """
+    def to_python(self, obj, value):
+        if value is None or value == 0:
+            return None
+
+        return datetime.datetime.fromtimestamp(value)
+
+    def from_python(self, obj, value):
+        if value is None or value == 0:
+            return 0
+        
+        try:
+            return time.mktime(value.timetuple())
+        except AttributeError:
+            raise ValueError('DateTimeField requires a `datetime.datetime` object.')
 
 
 class ForeignKeyField(Field):
