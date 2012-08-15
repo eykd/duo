@@ -157,6 +157,10 @@ class Item(_Item):
     cache_duration = None
     is_new = False
 
+    def __init__(self, *args, **kwargs):
+        super(Item, self).__init__(*args, **kwargs)
+        self._original = self.copy()
+
     @property
     def dynamo_key(self):
         """Return the hash_key or (hash_key, range_key) key.
@@ -192,6 +196,17 @@ class Item(_Item):
             key = table._get_cache_key(self.hash_key, self.range_key)
             self.cache.delete(key)
 
+    def get_expected(self):
+        """Get a dictionary of original values for the object, with new attributes filled in w/ False.
+
+        This is useful for the `expected_value` argument to put/save.
+        """
+        expected = {}
+        for key in self.items():
+            expected[key] = False
+        expected.update(self._original)
+        return expected
+
     def put(self, *args, **kwargs):
         """Put the item in the database, and also in the cache.
         """
@@ -203,6 +218,12 @@ class Item(_Item):
             warnings.warn('Cache write-through failed on put(). %s: %s' % (e.__class__.__name__, e.message))
         return result
 
+    def put_conditionally(self, *args, **kwargs):
+        """Put the item in the database, but only if the original values still hold.
+        """
+        kwargs['expected_value'] = self.get_expected()
+        self.put(*args, **kwargs)
+
     def save(self, *args, **kwargs):
         """Save the item in the database, and also in the cache.
         """
@@ -213,6 +234,12 @@ class Item(_Item):
         except Exception as e:
             warnings.warn('Cache write-through failed on save(). %s: %s' % (e.__class__.__name__, e.message))
         return result
+
+    def save_conditionally(self, *args, **kwargs):
+        """Save the updated item in the database, but only if the original values still hold.
+        """
+        kwargs['expected_value'] = self.get_expected()
+        self.save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         """Delete the item from the database, and also from the cache.
