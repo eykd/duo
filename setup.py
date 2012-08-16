@@ -2,6 +2,7 @@
 """setup.py -- setup file for duo module.
 """
 import sys
+import os
 
 from setuptools import setup
 
@@ -15,6 +16,8 @@ TESTS_REQUIRE = [
     'nose',
     'mock',
     ]
+
+README = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.rst')
 
 SETUP = dict(
     name = "duo",
@@ -30,7 +33,7 @@ SETUP = dict(
 
     version = "0.1.2",
     description = "A powerful, dynamic, pythonic interface to AWS DynamoDB.",
-    long_description = open('README.rst').read(),
+    long_description = open(README).read(),
     author = "David Eyk",
     author_email = "deyk@crossway.org",
     url = "http://www.crossway.org",
