@@ -113,6 +113,9 @@ class DynamoDB(object):
         self._tables.clear()
 
     def __getitem__(self, table_name):
+        if hasattr(table_name, 'table_name'):
+            table_name = table_name.table_name
+        
         if table_name not in self._tables:
             self._tables[table_name] = self.connection.get_table(table_name)
         
