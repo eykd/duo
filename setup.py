@@ -36,7 +36,19 @@ SETUP = dict(
     long_description = open(README).read(),
     author = "David Eyk",
     author_email = "deyk@crossway.org",
-    url = "http://www.crossway.org",
+    url = "http://http://github.com/eykd/duo",
+    license = 'BSD',
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Environment :: Web Environment',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: BSD License',
+        'Natural Language :: English',
+        'Topic :: Database',
+        'Topic :: Internet :: WWW/HTTP',
+        'Topic :: Software Development :: Libraries',
+        ],
     )
 
 if PYVERSION < 2.7:
