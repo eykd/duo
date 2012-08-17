@@ -467,7 +467,7 @@ class Field(object):
                     # Populate the default on the object.
                     setattr(obj, self.name, value)
             else:
-                raise AttributeError(self.name)
+                return None
 
         return value
 

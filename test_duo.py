@@ -227,8 +227,7 @@ class DuoTests(DynamoDBTests):
         self.assertEqual(item[self.hash_key_name], self.hash_key_value)
 
         item.foo = None
-        self.assertIsInstance(item['foo'], int)
-        self.assertEqual(item['foo'], 0)
+        self.assertRaises(KeyError, item.__getitem__, 'foo')
         self.assertEqual(item.foo, None)
 
     def test_date_fields_should_work_with_default_of_None(self):
