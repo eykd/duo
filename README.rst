@@ -145,3 +145,19 @@ Cache keys are determined by hash key, range key, and a cache prefix
     >>> MyHashKeyTable.cache_prefix = 'hello_world'
     >>> item._get_cache_key()
     'hello_world_new-item'
+
+
+CHANGELOG
+---------
+
+
+0.2.1
+^^^^^
+
+Corrections/improvements to setup.py. Packaging is HARD.
+
+
+0.2
+^^^
+
+Initial public release.
