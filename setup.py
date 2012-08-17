@@ -20,7 +20,7 @@ TESTS_REQUIRE = [
 README = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.rst')
 
 SETUP = dict(
-    name = "duo",
+    name = "dynamodb-duo",
     py_modules = ['duo', 'test_duo'],
     install_requires = INSTALL_REQUIRES,
     tests_require = TESTS_REQUIRE,
