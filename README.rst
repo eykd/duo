@@ -1,5 +1,5 @@
 Duo: A powerful, dynamic, pythonic interface to AWS DynamoDB
-------------------------------------------------------------
+============================================================
 
 Duo provides a few straightforward, Pythonic abstractions for working
 with Amazon Web Services' DynamoDB. It's a very light wrapper around
