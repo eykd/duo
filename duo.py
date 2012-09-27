@@ -413,11 +413,12 @@ class Table(object):
 
         See http://boto.readthedocs.org/en/latest/ref/dynamodb.html#boto.dynamodb.table.Table.query
         """
-        return self.table.query(hash_key, range_key_condition=range_key_condition,
-                                attributes_to_get=attributes_to_get, request_limit=request_limit,
-                                max_results=max_results, consistent_read=consistent_read,
-                                scan_index_forward=scan_index_forward, exclusive_start_key=exclusive_start_key,
-                                item_class=Item._table_types[self.table_name])
+        return self._extend_iter(
+            self.table.query(hash_key, range_key_condition=range_key_condition,
+                             attributes_to_get=attributes_to_get, request_limit=request_limit,
+                             max_results=max_results, consistent_read=consistent_read,
+                             scan_index_forward=scan_index_forward, exclusive_start_key=exclusive_start_key,
+                             item_class=Item._table_types[self.table_name]))
 
     def scan(self, scan_filter=None, attributes_to_get=None, request_limit=None, max_results=None, count=False,
              exclusive_start_key=None):
@@ -429,11 +430,12 @@ class Table(object):
 
         See http://boto.readthedocs.org/en/latest/ref/dynamodb.html#boto.dynamodb.table.Table.scan
         """
-        return self.table.scan(scan_filter=scan_filter, attributes_to_get=attributes_to_get, request_limit=request_limit,
-                               max_results=max_results, count=count, exclusive_start_key=exclusive_start_key,
-                               item_class=Item._table_types[self.table_name])
-
-
+        return self._extend_iter(
+            self.table.scan(scan_filter=scan_filter, attributes_to_get=attributes_to_get, request_limit=request_limit,
+                            max_results=max_results, count=count, exclusive_start_key=exclusive_start_key,
+                            item_class=Item._table_types[self.table_name]))
+    
+    
 class NONE(object): pass
 
 
