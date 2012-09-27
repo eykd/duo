@@ -151,6 +151,12 @@ CHANGELOG
 ---------
 
 
+0.2.2
+^^^^^
+
+Table.scan() and .query() should return extended Items.
+
+
 0.2.1
 ^^^^^
 
