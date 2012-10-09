@@ -36,7 +36,7 @@ SETUP = dict(
     long_description = open(README).read(),
     author = "David Eyk",
     author_email = "deyk@crossway.org",
-    url = "http://http://github.com/eykd/duo",
+    url = "http://github.com/eykd/duo",
     license = 'BSD',
     classifiers=[
         'Development Status :: 4 - Beta',
