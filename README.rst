@@ -150,6 +150,11 @@ Cache keys are determined by hash key, range key, and a cache prefix
 CHANGELOG
 ---------
 
+0.2.3
+^^^^^
+
+One more packaging fix, so pip won't explode. Thanks, cbrinker!
+
 
 0.2.2
 ^^^^^
