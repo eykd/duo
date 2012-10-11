@@ -1,5 +1,33 @@
 # -*- coding: utf-8 -*-
-"""duo -- a powerful, dynamic, pythonic interface to AWS DynamoDB.
+"""\
+duo -- a powerful, dynamic, pythonic interface to AWS DynamoDB
+==============================================================
+
+Welcome to duo
+--------------
+
+Glad to see someone reading the source. I'll try to keep the
+experience non-threatening.
+
+Duo has two jobs:
+
+Make working with DynamoDB more declarative
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To this end, duo provides some special metaclass magic to hook up your
+declared table and item subclasses. It also gives you
+`getattr()`-style descriptor fields that serve as lightweight schema
+*and* self-documenting code.
+
+Make working with DynamoDB's limited data-types less painful
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You've got two data types (well, yes, and sets, but let's ignore those
+for now). Obviously, you'll want to be serializing things. Duo's
+fields do the heavy lifting for you for some basic extended types, and
+it's easy to write your own fields.
+
+Got all that? Read on.
 """
 import warnings
 import collections
@@ -11,14 +39,51 @@ import boto
 from boto.dynamodb.item import Item as _Item
 from boto.dynamodb.exceptions import DynamoDBKeyNotFoundError
 
+# First off, since we have integers as one of our two native data
+# types, we're going to do enumerated types, which are great. You're
+# going to love these, or possibly hate them.
+
+# We're also going to use a metaclass. You don't have to understand
+# how metaclasses work to use this, but I hope this may shed some
+# light on what they are and how they work.
+
 
 class EnumMeta(type):
     """Simple metaclass for enumerated types.
 
-    Set the metaclass on a new class, then subclass that class to
-    create new members of the enumerated type.
+    To create a new enumerated type, set this metaclass on a new
+    class, then subclass that to create new members of the enumerated
+    type.
+
+    Example::
+
+        class Access(object):
+            __metaclass__ = duo.EnumMeta
+
+
+        ### WARNING: Order of definition matters! Add new access types to the end.
+        # NO_ACCESS.index == 0
+        class NO_ACCESS(Access): pass
+
+
+        # FULL_ACCESS.index == 1
+        class FULL_ACCESS(Access): pass
+
+
+        # TRIAL_ACCESS.index == 2
+        class TRIAL_ACCESS(Access): pass
+
+        ### Here's what that gets us:
+        Access.NO_ACCESS == NO_ACCESS
+        Access[0] == NO_ACCESS
+        int(NO_ACCESS) == 0
+        str(NO_ACCESS) == 'NO_ACCESS'
+        # Yes, that's right: magic __ methods on classes.
+
     """
     def __init__(cls, name, bases, attrs):
+        # Based on Marty Alchin's simple plugin framework idea:
+        # http://martyalchin.com/2008/jan/10/simple-plugin-framework/
         if not hasattr(cls, 'members'):
             # This branch only executes when processing the mount point itself.
             # So, since this is a new plugin type, not an implementation, this
@@ -34,6 +99,10 @@ class EnumMeta(type):
             setattr(cls.__class__, cls.__name__, cls)
             cls.key = cls.__name__
 
+    ### MAGIC METHODS: These magic methods are on the *type*, and
+    ### because a class is an instantiation of a type, they're usable
+    ### on classes of this type. Yes, that's right, you can cast your
+    ### subclass to an integer.
     def __iter__(cls):
         return iter(cls.members)
 
@@ -85,8 +154,24 @@ class EnumMeta(type):
             return super(EnumMeta, cls).__unicode__()
 
 
+# Now we're getting to the meat of the DynamoDB interactions. First
+# off, we need a way to manage an AWS connection to DynamoDB, and
+# associate a custom table type with that connection.
+
+
 class DynamoDB(object):
-    """DB object for managing a connection to DynamoDB and looking up custom Table handlers.
+    """Manages a connection to DynamoDB and looks up custom Table handlers.
+
+    Example::
+
+        DYNAMODB = duo.DynamoDB(
+            key = getattr(os.environ.get('DYNAMODB_ACCESS_KEY_ID'), ''),
+            secret = getattr(os.environ.get('DYNAMODB_SECRET_ACCESS_KEY'), ''),
+            cache = cache  # pymemcached-compatible cache object.
+            )
+
+         # Assuming you've already declared a table named `my_table_name`:
+         my_table = DYNAMODB['my_table_name']
     """
     def __init__(self, key, secret, cache=None):
         self.key = key
@@ -113,6 +198,8 @@ class DynamoDB(object):
         self._tables.clear()
 
     def __getitem__(self, table_name):
+        """Retrieve a registered custom table by name.
+        """
         if hasattr(table_name, 'table_name'):
             table_name = table_name.table_name
         
@@ -124,21 +211,32 @@ class DynamoDB(object):
         return table
 
 
+# Another metaclass. This one's similar to the EnumMeta, but much
+# simpler: it's just a place to record subclasses of our Table and
+# Item mount-points.
+
+
 class _TableMeta(type):
     """Metaclass plugin mount for plugins related to AWS DynamoDB tables.
+
+    Don't worry about using this one yourself. This is the magic that
+    glues your custom tables and your custom items together.
     """
     def __init__(cls, name, bases, attrs):
+        # Marty Alchin's simple plugin framework, again:
+        # http://martyalchin.com/2008/jan/10/simple-plugin-framework/
         if not hasattr(cls, '_table_types'):
             # This branch only executes when processing the mount point itself.
-            # So, since this is a new plugin type, not an implementation, this
+            # So, since this is a new plugin mount, not an implementation, this
             # class shouldn't be registered as a plugin. Instead, it sets up a
-            # list where plugins can be registered later.
+            # registry where custom plugins can be registered later.
             cls._table_types = collections.defaultdict(lambda: cls)
         else:
             # This must be a plugin implementation, which should be registered.
-            # Simply appending it to the list is all that's needed to keep
-            # track of it later.
             cls._table_types[cls.table_name] = cls
+            
+            # Special handling for class member fields, if there are
+            # any. A field needs to know what its name is.
             for name, value in attrs.copy().iteritems():
                 if isinstance(value, Field):
                     value.name = name
@@ -150,6 +248,8 @@ class Item(_Item):
     Subclass to customize fields and caching behavior. Subclassing
     auto-registers with the DB.
     """
+    # This is the mount-point for custom Items. Sub-classes will
+    # register themselves with this mount-point.
     __metaclass__ = _TableMeta
 
     duo_db = None
@@ -262,6 +362,8 @@ class Table(object):
     Subclass to customize behavior. Subclassing auto-registers with
     the DB.
     """
+    # This is the mount-point for custom Tables. Sub-classes will
+    # register themselves with this mount-point.
     __metaclass__ = _TableMeta
     
     table_name = None

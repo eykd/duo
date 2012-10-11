@@ -27,7 +27,7 @@ Usage:
 
     >>> import duo
 
-The module isn't very big (at the time of this writing, ~550
+The module isn't very big (at the time of this writing, ~700
 lines). If you want to know how something works, `you should read it`_.
 
 .. _you should read it: https://github.com/eykd/duo/blob/master/duo.py
