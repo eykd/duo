@@ -7,6 +7,18 @@ with Amazon Web Services' DynamoDB. It's a very light wrapper around
 library when you need it, but you don't have to sweat the details when
 you don't.
 
+Stern warning:
+--------------
+
+No seriously, it's a very light wrapper around
+`boto.dynamodb.layer2`. If you stray much beyond the usage examples
+below, you'd do best to be familiar with Boto's DynamoDB API. `The
+docs`_ are excellent. Reading `duo's source`_ may also be helpful. It's
+kept short for that reason.
+
+.. _The docs: http://boto.readthedocs.org/en/latest/ref/dynamodb.html
+.. _duo's source: https://github.com/eykd/duo/blob/master/duo.py
+
 
 Usage:
 ------
@@ -16,7 +28,9 @@ Usage:
     >>> import duo
 
 The module isn't very big (at the time of this writing, ~550
-lines). If you want to know how something works, you should read it.
+lines). If you want to know how something works, `you should read it`_.
+
+.. _you should read it: https://github.com/eykd/duo/blob/master/duo.py
 
 Pre-create your tables in the AWS console, then write simple classes
 to access them. `duo.Table` Sub-classes are automatically registered
