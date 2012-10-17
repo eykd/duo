@@ -468,6 +468,16 @@ class Table(object):
                         ))
             return cached
 
+    def get_item(self, hash_key, range_key=None, **params):
+        return self._extend(
+            self.table.get_item(
+                hash_key = hash_key,
+                range_key = range_key,
+                item_class = Item._table_types[self.table_name],
+                **params
+                )
+            )
+
     def __getitem__(self, key):
         if isinstance(key, tuple):
             hash_key, range_key = key
@@ -483,20 +493,11 @@ class Table(object):
         try:
             if range_key is None:
                 if self.range_key_name is None:
-                    item = self._extend(
-                        self.table.get_item(
-                            hash_key = hash_key,
-                            item_class = Item._table_types[self.table_name],
-                            ))
+                    item = self.get_item(hash_key)
                 else:
-                    return self._extend_iter(self.query(hash_key))
+                    return self.query(hash_key)
             else:
-                item = self._extend(
-                    self.table.get_item(
-                        hash_key = hash_key,
-                        range_key = range_key,
-                        item_class = Item._table_types[self.table_name],
-                        ))
+                item = self.get_item(hash_key, range_key)
         except DynamoDBKeyNotFoundError:
             item = self.create(hash_key, range_key)
 
