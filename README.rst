@@ -164,6 +164,12 @@ Cache keys are determined by hash key, range key, and a cache prefix
 CHANGELOG
 ---------
 
+0.2.4
+^^^^^
+
+Added a custom get_item to Table, for specifying consistent reads,
+etc. Used by __getitem__, for simpler code!
+
 0.2.3
 ^^^^^
 
