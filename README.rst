@@ -51,7 +51,7 @@ registered with the db::
     >>> class MyHashKeyItem(duo.Item):
     ...     table_name = 'my_hashkey_table'
     ...     hash_key_name = 'slug'
-    ... 
+    ...
     ...     slug = duo.UnicodeField()
     ...     my_field = duo.UnicodeField(default='foo')
     ...     on_this_date = duo.DateField(default=lambda o: datetime.date.today())
@@ -141,7 +141,7 @@ a `cache_duration` as an integer (0 is forever)::
     ...
     ...     table_name = 'my_hashkey_table'
     ...     hash_key_name = 'slug'
-    ... 
+    ...
     ...     slug = duo.UnicodeField()
     ...     my_field = duo.UnicodeField(default='foo')
     ...     on_this_date = duo.DateField(default=lambda o: datetime.date.today())
@@ -163,6 +163,11 @@ Cache keys are determined by hash key, range key, and a cache prefix
 
 CHANGELOG
 ---------
+
+0.2.5
+^^^^^
+
+get_item() now writes to the cache, even though it doesn't read from the cache.
 
 0.2.4
 ^^^^^
