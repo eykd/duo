@@ -25,13 +25,13 @@ SETUP = dict(
     install_requires = INSTALL_REQUIRES,
     tests_require = TESTS_REQUIRE,
     test_suite = 'nose.collector',
-    
+
     package_data = {
         '': ['*.txt', '*.html'],
         },
     zip_safe = False,
 
-    version = "0.2.4",
+    version = "0.2.5",
     description = "A powerful, dynamic, pythonic interface to AWS DynamoDB.",
     long_description = open(README).read(),
     author = "David Eyk",
