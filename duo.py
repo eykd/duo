@@ -178,7 +178,7 @@ class DynamoDB(object):
         self.secret = secret
         self._tables = {}
         self.cache = cache
-    
+
     @property
     def connection(self):
         """Lazy-load a boto DynamoDB connection.
@@ -202,10 +202,10 @@ class DynamoDB(object):
         """
         if hasattr(table_name, 'table_name'):
             table_name = table_name.table_name
-        
+
         if table_name not in self._tables:
             self._tables[table_name] = self.connection.get_table(table_name)
-        
+
         table = Table._table_types[table_name](self, self._tables[table_name], cache=self.cache)
         table.table_name = table_name
         return table
@@ -234,7 +234,7 @@ class _TableMeta(type):
         else:
             # This must be a plugin implementation, which should be registered.
             cls._table_types[cls.table_name] = cls
-            
+
             # Special handling for class member fields, if there are
             # any. A field needs to know what its name is.
             for name, value in attrs.copy().iteritems():
@@ -254,7 +254,7 @@ class Item(_Item):
 
     duo_db = None
     duo_table = None
-    
+
     table_name = None
     cache = None
     cache_duration = None
@@ -365,7 +365,7 @@ class Table(object):
     # This is the mount-point for custom Tables. Sub-classes will
     # register themselves with this mount-point.
     __metaclass__ = _TableMeta
-    
+
     table_name = None
     hash_key_name = None
     range_key_name = None
@@ -469,7 +469,7 @@ class Table(object):
             return cached
 
     def get_item(self, hash_key, range_key=None, **params):
-        return self._extend(
+        item = self._extend(
             self.table.get_item(
                 hash_key = hash_key,
                 range_key = range_key,
@@ -477,6 +477,8 @@ class Table(object):
                 **params
                 )
             )
+        item._set_cache()
+        return item
 
     def __getitem__(self, key):
         if isinstance(key, tuple):
@@ -537,8 +539,8 @@ class Table(object):
             self.table.scan(scan_filter=scan_filter, attributes_to_get=attributes_to_get, request_limit=request_limit,
                             max_results=max_results, count=count, exclusive_start_key=exclusive_start_key,
                             item_class=Item._table_types[self.table_name]))
-    
-    
+
+
 class NONE(object): pass
 
 
@@ -546,12 +548,12 @@ class Field(object):
     """A Field acts as a data descriptor on Item subclasses.
     """
     name = None
-    
+
     def __init__(self, default=NONE, readonly=False):
         self.default = default
         self.readonly = readonly
         super(Field, self).__init__()
-    
+
     def to_python(self, obj, value):
         raise NotImplementedError()
 
@@ -641,7 +643,7 @@ class ChoiceField(_ChoiceMixin, UnicodeField):
     """
     def from_python(self, obj, value):
         return unicode(self.enum_type[value])
-    
+
 
 class EnumField(_ChoiceMixin, IntField):
     """An integer field that enforces a set of possible values, using an Enum.
@@ -662,7 +664,7 @@ class DateField(Field):
     def from_python(self, obj, value):
         if value is None or value == 0:
             return 0
-        
+
         try:
             return value.toordinal()
         except AttributeError:
@@ -681,7 +683,7 @@ class DateTimeField(Field):
     def from_python(self, obj, value):
         if value is None or value == 0:
             return 0
-        
+
         try:
             return time.mktime(value.timetuple())
         except AttributeError:
@@ -694,9 +696,9 @@ class ForeignKeyField(Field):
     def to_python(self, obj, value):
         if isinstance(value, Item):
             return value
-        
+
         elif isinstance(value, dict):
-            fk_dict = value        
+            fk_dict = value
         else:
             fk_dict = json.loads(value)
         table_name = fk_dict['table']
