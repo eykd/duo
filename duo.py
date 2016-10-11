@@ -30,7 +30,7 @@ it's easy to write your own fields.
 Got all that? Read on.
 """
 from __future__ import unicode_literals
-from six import with_metaclass, string_types, text_type
+from six import with_metaclass, string_types, text_type, iteritems
 from builtins import object
 import warnings
 import collections
@@ -240,7 +240,7 @@ class _TableMeta(type):
 
             # Special handling for class member fields, if there are
             # any. A field needs to know what its name is.
-            for name, value in attrs.copy().iteritems():
+            for name, value in iteritems(attrs.copy()):
                 if isinstance(value, Field):
                     value.name = name
 

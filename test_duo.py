@@ -4,7 +4,7 @@
 Mocking AWS services is HARD.
 """
 from __future__ import unicode_literals
-from six import with_metaclass, string_types, text_type
+from six import with_metaclass, string_types, text_type, iteritems
 try:
     import unittest2 as unittest
 except ImportError:
@@ -31,7 +31,7 @@ class DynamoDBTests(unittest.TestCase):
 
     def setUp(self):
         super(DynamoDBTests, self).setUp()
-        for key, value in self.default_item_data.iteritems():
+        for key, value in iteritems(self.default_item_data):
             setattr(self, key, value)
 
         from boto.dynamodb import layer1
