@@ -9,7 +9,7 @@ except ImportError:
     import unittest
 
 import datetime
-    
+
 import mock
 
 
@@ -26,12 +26,12 @@ class DynamoDBTests(unittest.TestCase):
         key = 'foo',
         secret = 'bar',
         )
-    
+
     def setUp(self):
         super(DynamoDBTests, self).setUp()
         for key, value in self.default_item_data.iteritems():
             setattr(self, key, value)
-        
+
         from boto.dynamodb import layer1
         reload(layer1)
         self.boto_layer1 = layer1
@@ -85,7 +85,7 @@ class DynamoDBTests(unittest.TestCase):
         MockTable = self.MockTable = mock.Mock(
             spec = table.Table,
             wraps = table.Table(self.MockLayer2, self.describe_table()))
-        
+
         self.MockLayer2.describe_table.return_value = self.describe_table()
         self.MockLayer2.get_table.return_value = MockTable
         self.MockLayer2.layer1.get_item.return_value = self.mock_item_data()
@@ -193,7 +193,7 @@ class DuoTests(DynamoDBTests):
         item.foo = 9
         self.assertIsInstance(item['foo'], int)
         self.assertEqual(item['foo'], 9)
-        
+
     def test_date_fields_should_always_cast_to_an_integer(self):
         class TestItemSubclass(self.duo.Item):
             table_name = self.table_name
