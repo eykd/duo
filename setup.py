@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """setup.py -- setup file for duo module.
 """
+from __future__ import unicode_literals
 import sys
 import os
 

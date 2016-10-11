@@ -3,6 +3,7 @@
 
 Mocking AWS services is HARD.
 """
+from __future__ import unicode_literals
 try:
     import unittest2 as unittest
 except ImportError:
@@ -98,17 +99,17 @@ class DynamoDBTests(unittest.TestCase):
     def describe_table(self):
         """Create a dict corresponding to a table description JSON from AWS.
         """
-        return {u'Table': {u'CreationDateTime': 1343759006.036,
-                           u'ItemCount': 0,
-                           u'KeySchema': {u'HashKeyElement': {u'AttributeName': self.hash_key_name,
-                                                              u'AttributeType': u'S'},
-                                          u'RangeKeyElement': {u'AttributeName': self.range_key_name,
-                                                               u'AttributeType': u'S'}},
-                           u'ProvisionedThroughput': {u'ReadCapacityUnits': 10,
-                                                      u'WriteCapacityUnits': 5},
-                           u'TableName': self.table_name,
-                           u'TableSizeBytes': 0,
-                           u'TableStatus': u'ACTIVE'}}
+        return {'Table': {'CreationDateTime': 1343759006.036,
+                          'ItemCount': 0,
+                          'KeySchema': {'HashKeyElement': {'AttributeName': self.hash_key_name,
+                                                           'AttributeType': 'S'},
+                                        'RangeKeyElement': {'AttributeName': self.range_key_name,
+                                                            'AttributeType': 'S'}},
+                          'ProvisionedThroughput': {'ReadCapacityUnits': 10,
+                                                    'WriteCapacityUnits': 5},
+                          'TableName': self.table_name,
+                          'TableSizeBytes': 0,
+                          'TableStatus': 'ACTIVE'}}
 
     def tearDown(self):
         self.connect_dynamodb_patcher.stop()
@@ -167,13 +168,13 @@ class DuoTests(DynamoDBTests):
 
         item.foo = 'bar'
         self.assertIsInstance(item['foo'], unicode)
-        self.assertEqual(item['foo'], u'bar')
-        self.assertEqual(item.foo, u'bar')
+        self.assertEqual(item['foo'], 'bar')
+        self.assertEqual(item.foo, 'bar')
 
         item.foo = 9
         self.assertIsInstance(item['foo'], unicode)
-        self.assertEqual(item['foo'], u'9')
-        self.assertEqual(item.foo, u'9')
+        self.assertEqual(item['foo'], '9')
+        self.assertEqual(item.foo, '9')
 
     def test_integer_fields_should_always_cast_to_an_integer(self):
         class TestItemSubclass(self.duo.Item):
@@ -256,19 +257,19 @@ class DuoTests(DynamoDBTests):
         class Baz(Placeholder): pass
 
         self.assertEqual(int(Foo), 0)
-        self.assertEqual(unicode(Foo), u'Foo')
+        self.assertEqual(unicode(Foo), 'Foo')
         self.assertIs(Placeholder[0], Foo)
         self.assertIs(Placeholder['Foo'], Foo)
         self.assertIs(Placeholder.Foo, Foo)
 
         self.assertEqual(int(Bar), 1)
-        self.assertEqual(unicode(Bar), u'Bar')
+        self.assertEqual(unicode(Bar), 'Bar')
         self.assertIs(Placeholder[1], Bar)
         self.assertIs(Placeholder['Bar'], Bar)
         self.assertIs(Placeholder.Bar, Bar)
 
         self.assertEqual(int(Baz), 2)
-        self.assertEqual(unicode(Baz), u'Baz')
+        self.assertEqual(unicode(Baz), 'Baz')
         self.assertIs(Placeholder[2], Baz)
         self.assertIs(Placeholder['Baz'], Baz)
         self.assertIs(Placeholder.Baz, Baz)

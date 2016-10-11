@@ -29,6 +29,7 @@ it's easy to write your own fields.
 
 Got all that? Read on.
 """
+from __future__ import unicode_literals
 import warnings
 import collections
 import datetime

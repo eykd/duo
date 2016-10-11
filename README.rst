@@ -70,7 +70,7 @@ Databases and Tables use dict-like access syntax::
     >>> # Items are actually dict subclasses, but that's not where the
     >>> # fun is. They can only store unicode strings and integers:
     >>> item['slug']
-    u'new-item'
+    'new-item'
 
 
 Specify a field on an Item sub-class to get useful data types::
