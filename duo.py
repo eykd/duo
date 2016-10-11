@@ -30,7 +30,7 @@ it's easy to write your own fields.
 Got all that? Read on.
 """
 from __future__ import unicode_literals
-from six import with_metaclass, string_types
+from six import with_metaclass, string_types, text_type
 from builtins import object
 import warnings
 import collections
@@ -152,7 +152,7 @@ class EnumMeta(type):
 
     def __unicode__(cls):
         try:
-            return unicode(cls.key)
+            return text_type(cls.key)
         except AttributeError:
             return super(EnumMeta, cls).__unicode__()
 
@@ -616,7 +616,7 @@ class UnicodeField(Field):
         return value
 
     def from_python(self, obj, value):
-        return unicode(value)
+        return text_type(value)
 
 
 class IntegerField(Field):
@@ -647,7 +647,7 @@ class ChoiceField(_ChoiceMixin, UnicodeField):
     """A unicode field that enforces a set of possible values, using an Enum.
     """
     def from_python(self, obj, value):
-        return unicode(self.enum_type[value])
+        return text_type(self.enum_type[value])
 
 
 class EnumField(_ChoiceMixin, IntField):

@@ -4,7 +4,7 @@
 Mocking AWS services is HARD.
 """
 from __future__ import unicode_literals
-from six import with_metaclass, string_types
+from six import with_metaclass, string_types, text_type
 try:
     import unittest2 as unittest
 except ImportError:
@@ -257,19 +257,19 @@ class DuoTests(DynamoDBTests):
         class Baz(Placeholder): pass
 
         self.assertEqual(int(Foo), 0)
-        self.assertEqual(unicode(Foo), 'Foo')
+        self.assertEqual(text_type(Foo), 'Foo')
         self.assertIs(Placeholder[0], Foo)
         self.assertIs(Placeholder['Foo'], Foo)
         self.assertIs(Placeholder.Foo, Foo)
 
         self.assertEqual(int(Bar), 1)
-        self.assertEqual(unicode(Bar), 'Bar')
+        self.assertEqual(text_type(Bar), 'Bar')
         self.assertIs(Placeholder[1], Bar)
         self.assertIs(Placeholder['Bar'], Bar)
         self.assertIs(Placeholder.Bar, Bar)
 
         self.assertEqual(int(Baz), 2)
-        self.assertEqual(unicode(Baz), 'Baz')
+        self.assertEqual(text_type(Baz), 'Baz')
         self.assertIs(Placeholder[2], Baz)
         self.assertIs(Placeholder['Baz'], Baz)
         self.assertIs(Placeholder.Baz, Baz)
