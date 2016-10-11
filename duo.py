@@ -31,7 +31,6 @@ Got all that? Read on.
 """
 from __future__ import unicode_literals
 from six import with_metaclass, string_types, text_type, iteritems
-from builtins import object
 import warnings
 import collections
 import datetime
@@ -134,6 +133,9 @@ class EnumMeta(type):
             return cls.index
         except AttributeError:
             raise ValueError("'%s' does not support integer casting.")
+
+    def __nonzero__(cls):
+        return cls.__bool__()
 
     def __bool__(cls):
         return bool(int(cls))
