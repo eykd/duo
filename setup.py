@@ -15,6 +15,7 @@ INSTALL_REQUIRES = [
 TESTS_REQUIRE = [
     'nose',
     'mock',
+    'tox',
     ]
 
 README = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.rst')
