@@ -293,7 +293,7 @@ class Item(with_metaclass(_TableMeta, _Item)):
             table = self.duo_table
             key = table._get_cache_key(self.hash_key, self.range_key)
             duration = self.cache_duration if self.cache_duration is not None else table.cache_duration
-            self.cache.set(key, self.items(), duration)
+            self.cache.set(key, list(self.items()), duration)
 
     def _delete_cache(self):
         """Remove the item from the cache.
