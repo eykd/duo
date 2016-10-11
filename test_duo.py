@@ -5,6 +5,8 @@ Mocking AWS services is HARD.
 """
 from __future__ import unicode_literals
 from six import with_metaclass, string_types, text_type, iteritems
+from six.moves import reload_module
+
 try:
     import unittest2 as unittest
 except ImportError:
@@ -35,7 +37,7 @@ class DynamoDBTests(unittest.TestCase):
             setattr(self, key, value)
 
         from boto.dynamodb import layer1
-        reload(layer1)
+        reload_module(layer1)
         self.boto_layer1 = layer1
         # Mock out layer1 completely. This is where all the network interface occurs.
         MockLayer1 = mock.Mock(spec=layer1.Layer1)
@@ -46,7 +48,7 @@ class DynamoDBTests(unittest.TestCase):
 
         # Spy on layer2, making sure that it gets a mock layer1 object.
         from boto.dynamodb import layer2
-        reload(layer2)
+        reload_module(layer2)
         self.boto_layer2 = layer2
         MockLayer2 = self.MockLayer2 = mock.Mock(
             spec = layer2.Layer2,
@@ -78,8 +80,8 @@ class DynamoDBTests(unittest.TestCase):
         """Set up appropriate table-related stubs on the `boto.dynamodb.layer2` interface.
         """
         from boto.dynamodb import table, item
-        reload(table)
-        reload(item)
+        reload_module(table)
+        reload_module(item)
         self.boto_table = table
         self.boto_item = item
 
@@ -93,7 +95,7 @@ class DynamoDBTests(unittest.TestCase):
         self.MockLayer2.layer1.get_item.return_value = self.mock_item_data()
 
         import duo
-        reload(duo)
+        reload_module(duo)
         self.duo = duo
         self.db = duo.DynamoDB(key=self.key, secret=self.secret)
 
