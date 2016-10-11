@@ -30,7 +30,7 @@ it's easy to write your own fields.
 Got all that? Read on.
 """
 from __future__ import unicode_literals
-from six import with_metaclass
+from six import with_metaclass, string_types
 import warnings
 import collections
 import datetime
@@ -117,7 +117,7 @@ class EnumMeta(type):
                 return cls.members[int(idx)]
             elif isinstance(idx, int):
                 return cls.members[idx]
-            elif isinstance(idx, basestring):
+            elif isinstance(idx, string_types):
                 try:
                     return getattr(cls, idx)
                 except AttributeError:
@@ -138,7 +138,7 @@ class EnumMeta(type):
         return bool(int(cls))
 
     def __cmp__(self, other):
-        if isinstance(other, basestring):
+        if isinstance(other, string_types):
             return cmp(str(self), other)
         else:
             return cmp(int(self), other)
