@@ -4,6 +4,7 @@
 Mocking AWS services is HARD.
 """
 from __future__ import unicode_literals
+from six import with_metaclass
 try:
     import unittest2 as unittest
 except ImportError:
@@ -247,8 +248,7 @@ class DuoTests(DynamoDBTests):
         self.assertEqual(item.foo, None)
 
     def test_enum_classes_should_integrate_subclasses_as_enumerations(self):
-        class Placeholder(object):
-            __metaclass__ = self.duo.EnumMeta
+        class Placeholder(with_metaclass(self.duo.EnumMeta, object)): pass
 
         class Foo(Placeholder): pass
 
@@ -275,8 +275,7 @@ class DuoTests(DynamoDBTests):
         self.assertIs(Placeholder.Baz, Baz)
 
     def test_choice_fields_should_always_cast_to_unicode(self):
-        class Placeholder(object):
-            __metaclass__ = self.duo.EnumMeta
+        class Placeholder(with_metaclass(self.duo.EnumMeta, object)): pass
 
         class Foo(Placeholder): pass
 
@@ -304,8 +303,7 @@ class DuoTests(DynamoDBTests):
         self.assertIs(item.place, Bar)
 
     def test_enum_fields_should_always_cast_to_an_int(self):
-        class Placeholder(object):
-            __metaclass__ = self.duo.EnumMeta
+        class Placeholder(with_metaclass(self.duo.EnumMeta, object)): pass
 
         class Foo(Placeholder): pass
 

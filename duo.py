@@ -30,6 +30,7 @@ it's easy to write your own fields.
 Got all that? Read on.
 """
 from __future__ import unicode_literals
+from six import with_metaclass
 import warnings
 import collections
 import datetime
@@ -58,8 +59,8 @@ class EnumMeta(type):
 
     Example::
 
-        class Access(object):
-            __metaclass__ = duo.EnumMeta
+        class Access(with_metaclass(duo.EnumMeta, object)):
+            # ...
 
 
         ### WARNING: Order of definition matters! Add new access types to the end.
@@ -243,15 +244,16 @@ class _TableMeta(type):
                     value.name = name
 
 
-class Item(_Item):
-    """A boto DynamoDB Item, with caching secret sauce.
+class Item(with_metaclass(_TableMeta, _Item)):
+    """
+    A boto DynamoDB Item, with caching secret sauce.
 
     Subclass to customize fields and caching behavior. Subclassing
     auto-registers with the DB.
+
+    This is the mount-point for custom Items. Sub-classes will
+    register themselves with this mount-point.
     """
-    # This is the mount-point for custom Items. Sub-classes will
-    # register themselves with this mount-point.
-    __metaclass__ = _TableMeta
 
     duo_db = None
     duo_table = None
@@ -357,15 +359,16 @@ class Item(_Item):
         return result
 
 
-class Table(object):
-    """A DynamoDB Table, with super dict-like powers.
+class Table(with_metaclass(_TableMeta, object)):
+    """
+    A DynamoDB Table, with super dict-like powers.
 
     Subclass to customize behavior. Subclassing auto-registers with
     the DB.
+
+    This is the mount-point for custom Tables. Sub-classes will
+    register themselves with this mount-point.
     """
-    # This is the mount-point for custom Tables. Sub-classes will
-    # register themselves with this mount-point.
-    __metaclass__ = _TableMeta
 
     table_name = None
     hash_key_name = None

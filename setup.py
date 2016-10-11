@@ -11,6 +11,7 @@ PYVERSION = float('%s.%s' % (sys.version_info[0], sys.version_info[1]))
 
 INSTALL_REQUIRES = [
     'boto>=2.5.2',
+    'six',
     ]
 
 TESTS_REQUIRE = [
