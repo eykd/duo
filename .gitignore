@@ -30,3 +30,4 @@ build/
 share/
 man/
 *.gz
+.tox
