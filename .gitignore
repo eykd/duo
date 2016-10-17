@@ -31,3 +31,5 @@ share/
 man/
 *.gz
 .tox
+.coverage
+.eggs
