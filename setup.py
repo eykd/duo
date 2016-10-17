@@ -11,13 +11,13 @@ PYVERSION = float('%s.%s' % (sys.version_info[0], sys.version_info[1]))
 INSTALL_REQUIRES = [
     'boto>=2.5.2',
     'six',
-    ]
+]
 
 TESTS_REQUIRE = [
     'nose',
     'mock',
     'tox',
-    ]
+]
 
 README = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.rst')
 
@@ -30,7 +30,7 @@ SETUP = dict(
 
     package_data = {
         '': ['*.txt', '*.html'],
-        },
+    },
     zip_safe = False,
 
     version = "0.3.0",
@@ -51,9 +51,9 @@ SETUP = dict(
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Software Development :: Libraries',
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3.2',
-        ],
-    )
+        'Programming Language :: Python :: 3.5',
+    ],
+)
 
 if PYVERSION < 2.7:
     INSTALL_REQUIRES.append('importlib')
