@@ -10,6 +10,7 @@ PYVERSION = float('%s.%s' % (sys.version_info[0], sys.version_info[1]))
 
 INSTALL_REQUIRES = [
     'boto>=2.5.2',
+    'six',
     ]
 
 TESTS_REQUIRE = [
@@ -32,7 +33,7 @@ SETUP = dict(
         },
     zip_safe = False,
 
-    version = "0.2.5",
+    version = "0.3.0",
     description = "A powerful, dynamic, pythonic interface to AWS DynamoDB.",
     long_description = open(README).read(),
     author = "David Eyk",
@@ -49,6 +50,8 @@ SETUP = dict(
         'Topic :: Database',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Software Development :: Libraries',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3.2',
         ],
     )
 

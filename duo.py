@@ -29,6 +29,8 @@ it's easy to write your own fields.
 
 Got all that? Read on.
 """
+from __future__ import unicode_literals
+from six import with_metaclass, string_types, text_type, iteritems
 import warnings
 import collections
 import datetime
@@ -57,8 +59,8 @@ class EnumMeta(type):
 
     Example::
 
-        class Access(object):
-            __metaclass__ = duo.EnumMeta
+        class Access(with_metaclass(duo.EnumMeta, object)):
+            # ...
 
 
         ### WARNING: Order of definition matters! Add new access types to the end.
@@ -115,7 +117,7 @@ class EnumMeta(type):
                 return cls.members[int(idx)]
             elif isinstance(idx, int):
                 return cls.members[idx]
-            elif isinstance(idx, basestring):
+            elif isinstance(idx, string_types):
                 try:
                     return getattr(cls, idx)
                 except AttributeError:
@@ -133,10 +135,13 @@ class EnumMeta(type):
             raise ValueError("'%s' does not support integer casting.")
 
     def __nonzero__(cls):
+        return cls.__bool__()
+
+    def __bool__(cls):
         return bool(int(cls))
 
     def __cmp__(self, other):
-        if isinstance(other, basestring):
+        if isinstance(other, string_types):
             return cmp(str(self), other)
         else:
             return cmp(int(self), other)
@@ -149,7 +154,7 @@ class EnumMeta(type):
 
     def __unicode__(cls):
         try:
-            return unicode(cls.key)
+            return text_type(cls.key)
         except AttributeError:
             return super(EnumMeta, cls).__unicode__()
 
@@ -237,20 +242,21 @@ class _TableMeta(type):
 
             # Special handling for class member fields, if there are
             # any. A field needs to know what its name is.
-            for name, value in attrs.copy().iteritems():
+            for name, value in iteritems(attrs.copy()):
                 if isinstance(value, Field):
                     value.name = name
 
 
-class Item(_Item):
-    """A boto DynamoDB Item, with caching secret sauce.
+class Item(with_metaclass(_TableMeta, _Item)):
+    """
+    A boto DynamoDB Item, with caching secret sauce.
 
     Subclass to customize fields and caching behavior. Subclassing
     auto-registers with the DB.
+
+    This is the mount-point for custom Items. Sub-classes will
+    register themselves with this mount-point.
     """
-    # This is the mount-point for custom Items. Sub-classes will
-    # register themselves with this mount-point.
-    __metaclass__ = _TableMeta
 
     duo_db = None
     duo_table = None
@@ -289,7 +295,7 @@ class Item(_Item):
             table = self.duo_table
             key = table._get_cache_key(self.hash_key, self.range_key)
             duration = self.cache_duration if self.cache_duration is not None else table.cache_duration
-            self.cache.set(key, self.items(), duration)
+            self.cache.set(key, list(self.items()), duration)
 
     def _delete_cache(self):
         """Remove the item from the cache.
@@ -356,15 +362,16 @@ class Item(_Item):
         return result
 
 
-class Table(object):
-    """A DynamoDB Table, with super dict-like powers.
+class Table(with_metaclass(_TableMeta, object)):
+    """
+    A DynamoDB Table, with super dict-like powers.
 
     Subclass to customize behavior. Subclassing auto-registers with
     the DB.
+
+    This is the mount-point for custom Tables. Sub-classes will
+    register themselves with this mount-point.
     """
-    # This is the mount-point for custom Tables. Sub-classes will
-    # register themselves with this mount-point.
-    __metaclass__ = _TableMeta
 
     table_name = None
     hash_key_name = None
@@ -611,7 +618,7 @@ class UnicodeField(Field):
         return value
 
     def from_python(self, obj, value):
-        return unicode(value)
+        return text_type(value)
 
 
 class IntegerField(Field):
@@ -642,7 +649,7 @@ class ChoiceField(_ChoiceMixin, UnicodeField):
     """A unicode field that enforces a set of possible values, using an Enum.
     """
     def from_python(self, obj, value):
-        return unicode(self.enum_type[value])
+        return text_type(self.enum_type[value])
 
 
 class EnumField(_ChoiceMixin, IntField):

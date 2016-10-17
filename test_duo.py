@@ -3,13 +3,17 @@
 
 Mocking AWS services is HARD.
 """
+from __future__ import unicode_literals
+from six import with_metaclass, string_types, text_type, iteritems
+from six.moves import reload_module
+
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
 
 import datetime
-    
+
 import mock
 
 
@@ -26,14 +30,14 @@ class DynamoDBTests(unittest.TestCase):
         key = 'foo',
         secret = 'bar',
         )
-    
+
     def setUp(self):
         super(DynamoDBTests, self).setUp()
-        for key, value in self.default_item_data.iteritems():
+        for key, value in iteritems(self.default_item_data):
             setattr(self, key, value)
-        
+
         from boto.dynamodb import layer1
-        reload(layer1)
+        reload_module(layer1)
         self.boto_layer1 = layer1
         # Mock out layer1 completely. This is where all the network interface occurs.
         MockLayer1 = mock.Mock(spec=layer1.Layer1)
@@ -44,7 +48,7 @@ class DynamoDBTests(unittest.TestCase):
 
         # Spy on layer2, making sure that it gets a mock layer1 object.
         from boto.dynamodb import layer2
-        reload(layer2)
+        reload_module(layer2)
         self.boto_layer2 = layer2
         MockLayer2 = self.MockLayer2 = mock.Mock(
             spec = layer2.Layer2,
@@ -76,8 +80,8 @@ class DynamoDBTests(unittest.TestCase):
         """Set up appropriate table-related stubs on the `boto.dynamodb.layer2` interface.
         """
         from boto.dynamodb import table, item
-        reload(table)
-        reload(item)
+        reload_module(table)
+        reload_module(item)
         self.boto_table = table
         self.boto_item = item
 
@@ -85,30 +89,30 @@ class DynamoDBTests(unittest.TestCase):
         MockTable = self.MockTable = mock.Mock(
             spec = table.Table,
             wraps = table.Table(self.MockLayer2, self.describe_table()))
-        
+
         self.MockLayer2.describe_table.return_value = self.describe_table()
         self.MockLayer2.get_table.return_value = MockTable
         self.MockLayer2.layer1.get_item.return_value = self.mock_item_data()
 
         import duo
-        reload(duo)
+        reload_module(duo)
         self.duo = duo
         self.db = duo.DynamoDB(key=self.key, secret=self.secret)
 
     def describe_table(self):
         """Create a dict corresponding to a table description JSON from AWS.
         """
-        return {u'Table': {u'CreationDateTime': 1343759006.036,
-                           u'ItemCount': 0,
-                           u'KeySchema': {u'HashKeyElement': {u'AttributeName': self.hash_key_name,
-                                                              u'AttributeType': u'S'},
-                                          u'RangeKeyElement': {u'AttributeName': self.range_key_name,
-                                                               u'AttributeType': u'S'}},
-                           u'ProvisionedThroughput': {u'ReadCapacityUnits': 10,
-                                                      u'WriteCapacityUnits': 5},
-                           u'TableName': self.table_name,
-                           u'TableSizeBytes': 0,
-                           u'TableStatus': u'ACTIVE'}}
+        return {'Table': {'CreationDateTime': 1343759006.036,
+                          'ItemCount': 0,
+                          'KeySchema': {'HashKeyElement': {'AttributeName': self.hash_key_name,
+                                                           'AttributeType': 'S'},
+                                        'RangeKeyElement': {'AttributeName': self.range_key_name,
+                                                            'AttributeType': 'S'}},
+                          'ProvisionedThroughput': {'ReadCapacityUnits': 10,
+                                                    'WriteCapacityUnits': 5},
+                          'TableName': self.table_name,
+                          'TableSizeBytes': 0,
+                          'TableStatus': 'ACTIVE'}}
 
     def tearDown(self):
         self.connect_dynamodb_patcher.stop()
@@ -166,14 +170,14 @@ class DuoTests(DynamoDBTests):
         self.assertEqual(item[self.hash_key_name], self.hash_key_value)
 
         item.foo = 'bar'
-        self.assertIsInstance(item['foo'], unicode)
-        self.assertEqual(item['foo'], u'bar')
-        self.assertEqual(item.foo, u'bar')
+        self.assertIsInstance(item['foo'], string_types)
+        self.assertEqual(item['foo'], 'bar')
+        self.assertEqual(item.foo, 'bar')
 
         item.foo = 9
-        self.assertIsInstance(item['foo'], unicode)
-        self.assertEqual(item['foo'], u'9')
-        self.assertEqual(item.foo, u'9')
+        self.assertIsInstance(item['foo'], string_types)
+        self.assertEqual(item['foo'], '9')
+        self.assertEqual(item.foo, '9')
 
     def test_integer_fields_should_always_cast_to_an_integer(self):
         class TestItemSubclass(self.duo.Item):
@@ -193,7 +197,7 @@ class DuoTests(DynamoDBTests):
         item.foo = 9
         self.assertIsInstance(item['foo'], int)
         self.assertEqual(item['foo'], 9)
-        
+
     def test_date_fields_should_always_cast_to_an_integer(self):
         class TestItemSubclass(self.duo.Item):
             table_name = self.table_name
@@ -246,8 +250,7 @@ class DuoTests(DynamoDBTests):
         self.assertEqual(item.foo, None)
 
     def test_enum_classes_should_integrate_subclasses_as_enumerations(self):
-        class Placeholder(object):
-            __metaclass__ = self.duo.EnumMeta
+        class Placeholder(with_metaclass(self.duo.EnumMeta, object)): pass
 
         class Foo(Placeholder): pass
 
@@ -256,26 +259,25 @@ class DuoTests(DynamoDBTests):
         class Baz(Placeholder): pass
 
         self.assertEqual(int(Foo), 0)
-        self.assertEqual(unicode(Foo), u'Foo')
+        self.assertEqual(text_type(Foo), 'Foo')
         self.assertIs(Placeholder[0], Foo)
         self.assertIs(Placeholder['Foo'], Foo)
         self.assertIs(Placeholder.Foo, Foo)
 
         self.assertEqual(int(Bar), 1)
-        self.assertEqual(unicode(Bar), u'Bar')
+        self.assertEqual(text_type(Bar), 'Bar')
         self.assertIs(Placeholder[1], Bar)
         self.assertIs(Placeholder['Bar'], Bar)
         self.assertIs(Placeholder.Bar, Bar)
 
         self.assertEqual(int(Baz), 2)
-        self.assertEqual(unicode(Baz), u'Baz')
+        self.assertEqual(text_type(Baz), 'Baz')
         self.assertIs(Placeholder[2], Baz)
         self.assertIs(Placeholder['Baz'], Baz)
         self.assertIs(Placeholder.Baz, Baz)
 
     def test_choice_fields_should_always_cast_to_unicode(self):
-        class Placeholder(object):
-            __metaclass__ = self.duo.EnumMeta
+        class Placeholder(with_metaclass(self.duo.EnumMeta, object)): pass
 
         class Foo(Placeholder): pass
 
@@ -298,13 +300,12 @@ class DuoTests(DynamoDBTests):
             item.place = 'bar'
 
         item.place = 'Bar'
-        self.assertIsInstance(item['place'], unicode)
+        self.assertIsInstance(item['place'], string_types)
         self.assertEqual(item['place'], 'Bar')
         self.assertIs(item.place, Bar)
 
     def test_enum_fields_should_always_cast_to_an_int(self):
-        class Placeholder(object):
-            __metaclass__ = self.duo.EnumMeta
+        class Placeholder(with_metaclass(self.duo.EnumMeta, object)): pass
 
         class Foo(Placeholder): pass
 

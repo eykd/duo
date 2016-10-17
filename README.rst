@@ -70,7 +70,7 @@ Databases and Tables use dict-like access syntax::
     >>> # Items are actually dict subclasses, but that's not where the
     >>> # fun is. They can only store unicode strings and integers:
     >>> item['slug']
-    u'new-item'
+    'new-item'
 
 
 Specify a field on an Item sub-class to get useful data types::
@@ -163,6 +163,11 @@ Cache keys are determined by hash key, range key, and a cache prefix
 
 CHANGELOG
 ---------
+
+0.3.0
+^^^^^
+
+Add Python 3 compatibility.
 
 0.2.5
 ^^^^^
