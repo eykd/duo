@@ -29,7 +29,7 @@ class DynamoDBTests(unittest.TestCase):
         item_attrs = {},
         key = 'foo',
         secret = 'bar',
-        )
+    )
 
     def setUp(self):
         super(DynamoDBTests, self).setUp()
@@ -70,9 +70,9 @@ class DynamoDBTests(unittest.TestCase):
             "Item": {
                 self.hash_key_name: self.hash_key_value,
                 self.range_key_name: self.range_key_value
-                },
+            },
             "ConsumedCapacityUnits": 1
-            }
+        }
         data['Item'].update(self.item_attrs)
         return data
 

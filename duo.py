@@ -101,10 +101,10 @@ class EnumMeta(type):
             setattr(cls.__class__, cls.__name__, cls)
             cls.key = cls.__name__
 
-    ### MAGIC METHODS: These magic methods are on the *type*, and
-    ### because a class is an instantiation of a type, they're usable
-    ### on classes of this type. Yes, that's right, you can cast your
-    ### subclass to an integer.
+    # MAGIC METHODS: These magic methods are on the *type*, and
+    # because a class is an instantiation of a type, they're usable
+    # on classes of this type. Yes, that's right, you can cast your
+    # subclass to an integer.
     def __iter__(cls):
         return iter(cls.members)
 
@@ -192,7 +192,7 @@ class DynamoDB(object):
             self._connection = boto.connect_dynamodb(
                 aws_access_key_id=self.key,
                 aws_secret_access_key=self.secret
-                )
+            )
         return self._connection
 
     def reset(self):
@@ -426,7 +426,7 @@ class Table(with_metaclass(_TableMeta, object)):
             range_key = range_key,
             attrs = kwargs,
             item_class = Item._table_types[self.table_name],
-            )
+        )
         return self._extend(item, is_new=True)
 
     def _extend(self, item, is_new=False):
@@ -472,7 +472,7 @@ class Table(with_metaclass(_TableMeta, object)):
                         hash_key = hash_key,
                         range_key = range_key,
                         attrs = dict(cached)
-                        ))
+                    ))
             return cached
 
     def get_item(self, hash_key, range_key=None, **params):
@@ -482,8 +482,8 @@ class Table(with_metaclass(_TableMeta, object)):
                 range_key = range_key,
                 item_class = Item._table_types[self.table_name],
                 **params
-                )
             )
+        )
         item._set_cache()
         return item
 
@@ -719,4 +719,4 @@ class ForeignKeyField(Field):
         return json.dumps({
             'table': value.table_name,
             'key': value.dynamo_key
-            })
+        })
