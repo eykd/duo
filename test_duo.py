@@ -331,3 +331,27 @@ class DuoTests(DynamoDBTests):
         self.assertIsInstance(item['place'], int)
         self.assertEqual(item['place'], 1)
         self.assertIs(item.place, Bar)
+
+    def test_enum_classes_should_compare(self):
+        class Placeholder(with_metaclass(self.duo.EnumMeta, object)): pass
+
+        class Foo(Placeholder): pass
+
+        class Bar(Placeholder): pass
+
+        class Baz(Placeholder): pass
+
+        self.assertEqual(Foo, 0)
+        self.assertEqual(Foo, 'Foo')
+        self.assertEqual(Foo, Foo)
+        self.assertLess(Foo, Bar)
+        self.assertEqual(Bar, 1)
+        self.assertEqual(Bar, 'Bar')
+        self.assertEqual(Bar, Bar)
+        self.assertGreater(Bar, Foo)
+        self.assertLess(Bar, Baz)
+        self.assertEqual(Baz, 2)
+        self.assertEqual(Baz, 'Baz')
+        self.assertEqual(Baz, Baz)
+        self.assertGreater(Baz, Bar)
+        self.assertLess(Baz, 3)
