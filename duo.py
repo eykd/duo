@@ -31,6 +31,7 @@ Got all that? Read on.
 """
 from __future__ import unicode_literals
 from six import with_metaclass, string_types, text_type, iteritems
+from functools import total_ordering
 import warnings
 import collections
 import datetime
@@ -50,6 +51,7 @@ from boto.dynamodb.exceptions import DynamoDBKeyNotFoundError
 # light on what they are and how they work.
 
 
+@total_ordering
 class EnumMeta(type):
     """Simple metaclass for enumerated types.
 
@@ -140,11 +142,17 @@ class EnumMeta(type):
     def __bool__(cls):
         return bool(int(cls))
 
-    def __cmp__(self, other):
+    def __lt__(self, other):
         if isinstance(other, string_types):
-            return cmp(str(self), other)
+            return str(self) < other
         else:
-            return cmp(int(self), other)
+            return int(self) < int(other)
+
+    def __eq__(self, other):
+        if isinstance(other, string_types):
+            return str(self) == other
+        else:
+            return int(self) == int(other)
 
     def __str__(cls):
         try:
