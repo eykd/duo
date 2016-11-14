@@ -175,6 +175,11 @@ Cache keys are determined by hash key, range key, and a cache prefix
 CHANGELOG
 ---------
 
+0.3.1
+^^^^^
+
+Fixed bug whereby EnumMeta and subclasses were not comparing properly (re: at all) in Python 3.
+
 0.3.0
 ^^^^^
 

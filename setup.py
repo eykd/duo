@@ -33,7 +33,7 @@ SETUP = dict(
     },
     zip_safe = False,
 
-    version = "0.3.0",
+    version = "0.3.1",
     description = "A powerful, dynamic, pythonic interface to AWS DynamoDB.",
     long_description = open(README).read(),
     author = "David Eyk",
