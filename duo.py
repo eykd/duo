@@ -148,6 +148,12 @@ class EnumMeta(type):
         else:
             return int(self) < int(other)
 
+    def __gt__(self, other):
+        if isinstance(other, string_types):
+            return str(self) > other
+        else:
+            return int(self) > int(other)
+
     def __eq__(self, other):
         if isinstance(other, string_types):
             return str(self) == other
