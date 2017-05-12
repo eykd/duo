@@ -2,3 +2,5 @@ nose
 mock
 coverage
 coveralls
+moto
+-e .
