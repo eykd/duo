@@ -158,7 +158,10 @@ class EnumMeta(type):
         if isinstance(other, string_types):
             return str(self) == other
         else:
-            return int(self) == int(other)
+            try:
+                return int(self) == int(other)
+            except TypeError:
+                return False
 
     def __str__(cls):
         try:
